@@ -6,11 +6,11 @@ import bootstrap._
 
 class PricingSimulation extends Simulation {
   val port = 9090
-  val users = 100
+  val users = Integer.valueOf(System.getProperty("users"));
   val duration = 30
 
   val httpConf = httpConfig
-    .baseURL("http://localhost:" + port)
+    .baseURL("http://" + System.getProperty("ip") + ":" + port)
     .acceptHeader("application/json, text/plain, */*")
     .acceptCharsetHeader("ISO-8859-1,utf-8;q=0.7,*;q=0.3")
     .acceptEncodingHeader("gzip,deflate,sdch")
@@ -55,6 +55,5 @@ class PricingSimulation extends Simulation {
       .headers(headers_24)
       .check(status.is(200)))
   }
-
   setUp(scn.users(users).ramp(5 milliseconds).protocolConfig(httpConf))
 }

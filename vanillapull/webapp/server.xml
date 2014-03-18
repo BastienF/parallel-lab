@@ -1,0 +1,22 @@
+<Server port="9090">
+    <GlobalNamingResources>
+
+    </GlobalNamingResources>
+   <Service name="Catalina">
+    <Connector port="9292"  protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               maxThreads="1"
+               redirectPort="8443" />
+       <Engine  name="Catalina"  defaultHost="localhost">
+
+           <!-- contenu de l'élément Engine -->
+
+       </Engine>
+       <Host  name="localhost"   appBase="webapps"
+              unpackWARs="true"  autoDeploy="true">
+
+           <!-- contenu de l'élément Host -->
+
+       </Host>
+    </Service>
+    </Server>

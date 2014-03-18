@@ -39,8 +39,7 @@ public class AkkaMonteCarlo implements PricingService {
 
 	public static final int processors = Runtime.getRuntime()
 			.availableProcessors();
-	@Value("${monteCarloIterations}")
-	long numberOfIterations;
+    long numberOfIterations = Integer.valueOf(System.getProperty("iterations"));;
 	@Value("${interestRate}")
 	double interestRate;
 

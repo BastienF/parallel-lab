@@ -1,9 +1,17 @@
 package com.octo.vanillapull.service;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import com.octo.vanillapull.monitoring.meters.MetersManager;
 import com.octo.vanillapull.util.StdRandom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import javax.inject.Inject;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Henri Tremblay
@@ -11,9 +19,10 @@ import org.springframework.stereotype.Service;
 @Profile("mono")
 @Service
 public class MonoThreadedMonteCarlo implements PricingService {
+    public final static Logger logger = LoggerFactory.getLogger(MonoThreadedMonteCarlo.class);
 
-	@Value("${monteCarloIterations}")
-	long numberOfIterations;
+
+    long numberOfIterations = Integer.valueOf(System.getProperty("iterations"));
 	@Value("${interestRate}")
 	double interestRate;
 
@@ -21,9 +30,15 @@ public class MonoThreadedMonteCarlo implements PricingService {
 	public double calculatePrice(double maturity, double spot, double strike,
 			double volatility) {
 
+
+
 		double bestPremiumsComputed = 0;
 
 		maturity /= 360.0;
+
+        //logger.info("=================================================================================");
+        //logger.info("\t\t Start iteration Obj : " + this + " Thread : " + Thread.currentThread().getName());
+        //logger.info("=================================================================================");
 
 		for (long i = 0; i < numberOfIterations; i++) {
 			double gaussian = StdRandom.gaussian();
@@ -33,6 +48,10 @@ public class MonoThreadedMonteCarlo implements PricingService {
 					priceComputed, strike);
 			bestPremiumsComputed += bestPremium;
 		}
+
+        //logger.info("=================================================================================");
+        //logger.info("\t\t Stop iteration Obj : " + this + " Thread : " + Thread.currentThread().getName());
+        //logger.info("=================================================================================");
 
 		// Compute mean
 		double meanOfPremiums = bestPremiumsComputed / numberOfIterations;

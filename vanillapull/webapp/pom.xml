@@ -18,6 +18,13 @@
 	</properties>
 
 	<dependencies>
+        <!-- Monitoring -->
+        <dependency>
+            <groupId>com.codahale.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+        <!-- Monitoring -->
 		<!-- Spring -->
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -177,7 +184,7 @@
 				<artifactId>tomcat7-maven-plugin</artifactId>
 				<version>2.1</version>
 				<configuration>
-					<port>8080</port>
+					<port>9090</port>
 					<path>/</path>
 				</configuration>
 				<dependencies>
