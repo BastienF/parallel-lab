@@ -1,4 +1,0 @@
-name	nbRequest	nbRequestOK	nbRequestKO	minResponseTime	minResponseTimeOK	minResponseTimeKO	maxResponseTime	maxResponseTimeOK	maxResponseTimeKO	meanResponseTime	meanResponseTimeOK	meanResponseTimeKO	deviation	deviationOK	deviationKO	percentile1	percentile1OK	percentile1KO	percentile2	percentile2OK	percentile2KO	group1Name	group1Count	group1Percentage	group2Name	group2Count	group2Percentage	group3Name	group3Count	group3Percentage	group4Name	group4Count	group4Percentage	meanNumberOfRequestsPerSecond	meanNumberOfRequestsPerSecondOK	meanNumberOfRequestsPerSecondKO
-Global Information	247	247	0	50	50	-1	22280	22280	-1	240	240	-1	1991	1991	-1	70	70	-1	80	80	-1	t < 800 ms	245	99	800 ms < t < 1200 ms	0	0	t > 1200 ms	2	0	failed	0	0	8	8	-1
-price	247	247	0	50	50	-1	22280	22280	-1	240	240	-1	1991	1991	-1	70	70	-1	80	80	-1	t < 800 ms	245	99	800 ms < t < 1200 ms	0	0	t > 1200 ms	2	0	failed	0	0	8	8	-1
-
