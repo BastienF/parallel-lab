@@ -29,21 +29,20 @@ import com.excilys.ebi.gatling.core.util.StringHelper.END_OF_LINE
 import grizzled.slf4j.Logging
 import com.excilys.ebi.gatling.core.result.writer.DataWriter
 
-object JsonDataWriter {
+object CsvDataWriter {
 
   val emptyField = " "
   val sanitizerPattern = """[\n\r\t]""".r
   def sanitize(input: String): String = Option(sanitizerPattern.replaceAllIn(input, " ")).getOrElse("")
 
   def serialize(requestRecord: RequestRecord) = {
-    new StringBuilder().append("{\n")
-      .append("\"Implementation\": \"").append(System.getProperty("implementation")).append("\",\n")
-      .append("\"Status\": \"").append(requestRecord.requestStatus.toString).append("\",\n")
-      .append("\"Iterations\": \"").append(System.getProperty("iterations")).append("\",\n")
-      .append("\"ResponseTime\": \"").append((requestRecord.responseReceivingStartDate - requestRecord.requestSendingEndDate).toString).append("\",\n")
-      .append("\"Duration\": \"").append(System.getProperty("duration")).append("\",\n")
-      .append("\"Users\": \"").append(System.getProperty("users")).append("\"\n")
-      .append("},\n")
+    new StringBuilder()
+      .append(System.getProperty("implementation")).append(";")
+      .append(requestRecord.requestStatus.toString).append(";")
+      .append(System.getProperty("iterations")).append(";")
+      .append((requestRecord.responseReceivingStartDate - requestRecord.requestSendingEndDate).toString).append(";")
+      .append(System.getProperty("duration")).append(";")
+      .append(System.getProperty("users")).append("\n")
       .toString.getBytes(configuration.core.encoding)
   }
 
@@ -63,9 +62,9 @@ object JsonDataWriter {
  *
  * It writes the data of the simulation if a tabulation separated values file
  */
-class JsonDataWriter extends DataWriter with Logging {
+class CsvDataWriter extends DataWriter with Logging {
 
-  import com.excilys.ebi.gatling.writer.JsonDataWriter._
+  import com.excilys.ebi.gatling.writer.CsvDataWriter._
 
   private val bufferSize = configuration.data.file.bufferSize
   private var bufferPosition = 0
@@ -94,7 +93,7 @@ class JsonDataWriter extends DataWriter with Logging {
   }
 
   override def onInitializeDataWriter(runRecord: RunRecord, scenarios: Seq[ShortScenarioDescription]) {
-    val simulationLog = System.getProperty("logPath") + ".json"
+    val simulationLog = System.getProperty("logPath") + ".csv"
     os = new FileOutputStream(simulationLog.toString, true)
   }
 

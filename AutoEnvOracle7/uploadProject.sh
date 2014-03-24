@@ -9,3 +9,4 @@ upload pom.xml
 upload scripts/
 upload webapp/pom.xml
 upload webapp/src
+upload gatling-json/gatling-highcharts/pricingsimulation

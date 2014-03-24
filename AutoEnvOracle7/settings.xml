@@ -1,0 +1,12 @@
+<settings>
+<pluginGroups>
+<pluginGroup>org.apache.tomcat.maven</pluginGroup>
+</pluginGroups>
+<servers>
+<server>
+   <id>localhost</id>
+   <username>tomcat</username>
+   <password>password</password>
+</server>
+</servers>
+</settings>

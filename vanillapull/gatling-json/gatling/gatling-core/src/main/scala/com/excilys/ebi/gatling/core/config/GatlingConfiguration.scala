@@ -135,6 +135,7 @@ object GatlingConfiguration extends Logging {
 					case "file" => "com.excilys.ebi.gatling.core.result.writer.FileDataWriter"
 					case "graphite" => "com.excilys.ebi.gatling.metrics.GraphiteDataWriter"
           case "json" => "com.excilys.ebi.gatling.writer.JsonDataWriter"
+	  case "csv" => "com.excilys.ebi.gatling.writer.CsvDataWriter"
 					case clazz => clazz
 				},
 				dataReaderClass = (config.getString(CONF_DATA_READER_CLASS_NAME)).trim match {

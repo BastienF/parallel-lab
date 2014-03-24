@@ -34,6 +34,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.provider :virtualbox do |vb|
       vb.customize ["modifyvm", :id, "--cpus", 4]
       config.vm.network "forwarded_port", guest: 22, host: 23457
+      for i in 10001..10010
+        config.vm.network :forwarded_port, guest: i, host: i
+      end
     end
     
     config.vm.provision :shell, :privileged => false, :path => "server.sh"

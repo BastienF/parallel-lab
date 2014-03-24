@@ -5,7 +5,7 @@ import akka.util.duration._
 import bootstrap._
 
 class PricingSimulation extends Simulation {
-  val port = 9090
+  val port = 8080
   val users = Integer.valueOf(System.getProperty("users"));
   val duration = 30
 
@@ -51,7 +51,7 @@ class PricingSimulation extends Simulation {
       .feed(csv("stock.csv").random)
       .feed(strikeFeeder)
       .exec(http("price")
-      .get("/services/pricer/price?symbol=${symbol}&maturity=${maturity}&strike=${strike}")
+      .get("/vanillapull-1.0-SNAPSHOT/services/pricer/price?symbol=${symbol}&maturity=${maturity}&strike=${strike}")
       .headers(headers_24)
       .check(status.is(200)))
   }

@@ -5,12 +5,13 @@ import com.excilys.ebi.gatling.core.Predef._
 import com.excilys.ebi.gatling.http.Predef._
 import akka.util.duration._
 import bootstrap._
+import java.util.concurrent.TimeUnit
 
 class PricingSimulation extends Simulation {
 
-   val port = 9090
+   val port = 8080
    val users = Integer.valueOf(System.getProperty("users"));
-   val duration = 30
+   val duration = 30;
 
    val httpConf = httpConfig
      .baseURL("http://" + System.getProperty("ip") + ":" + port)
@@ -49,12 +50,12 @@ class PricingSimulation extends Simulation {
    }
 
    val scn = scenario("Pricing")
-     .during(duration seconds) {
+     .during(duration) {
      feed(csv("maturity.csv").random)
        .feed(csv("stock.csv").random)
        .feed(strikeFeeder)
        .exec(http("price")
-       .get("/services/pricer/price?symbol=${symbol}&maturity=${maturity}&strike=${strike}")
+       .get("/vanillapull-1.0-SNAPSHOT/services/pricer/price?symbol=${symbol}&maturity=${maturity}&strike=${strike}")
        .headers(headers_24)
        .check(status.is(200)))
    }
