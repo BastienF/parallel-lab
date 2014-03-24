@@ -17,4 +17,5 @@ AutoEnvOracle7/results
 AutoEnvOracle7/share
 *~
 .vagrant
+vagrant.log
 
