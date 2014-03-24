@@ -31,7 +31,7 @@ After that for each testing scenarios, the desired scenario has to be write in l
 This script will run up the Gatling and the Server VM. Upload the latest version of the project and run the testing scenario for each implementation.
 The results will be downloaded on the local folder "results" with the full json and csv logs in the sub-directories "json" and "csv"
 
-An exemple of testing scenario could be :
-#launch_all number_of_clients number_of_iterations duration_time
-launch_all 100 62500 30;
+An exemple of testing scenario could be :<br/>
+//launch_all number_of_clients number_of_iterations duration_time<br/>
+launch_all 100 62500 30;<br/>
 launch_all 100 93750 30;
