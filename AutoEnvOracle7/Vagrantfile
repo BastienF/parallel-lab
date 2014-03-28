@@ -22,6 +22,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.network "private_network", ip: @lr_ip_gatling
     config.vm.provider :virtualbox do |vb|
       vb.customize ["modifyvm", :id, "--cpus", 2]
+      vb.memory = 1024
       config.vm.network "forwarded_port", guest: 22, host: 12347
     end
 
@@ -33,7 +34,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.network "private_network", ip: @lr_ip_server
     config.vm.provider :virtualbox do |vb|
       vb.customize ["modifyvm", :id, "--cpus", 4]
+      vb.memory = 1024
       config.vm.network "forwarded_port", guest: 22, host: 23457
+      config.vm.network "forwarded_port", guest: 80, host: 8087
       for i in 10001..10010
         config.vm.network :forwarded_port, guest: i, host: i
       end

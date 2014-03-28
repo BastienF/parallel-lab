@@ -11,3 +11,10 @@ echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | su
 sudo apt-get -y install oracle-java7-installer
 sudo apt-get install oracle-java7-set-default
 sudo apt-get -y install maven
+cd
+sudo apt-get install -y git
+git clone https://github.com/gdbtek/setup-graphite.git
+cd setup-graphite/
+sudo ./ubuntu.bash --login 'root' --password 'root' --email 'bfi@octo.com'
+cd bin/
+sudo ./start
