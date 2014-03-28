@@ -11,11 +11,11 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Use a precise64. You can change that to precise32 if needed
-  config.vm.box = "precise64"
+  config.vm.box = "saucy"
 
   # The url from where the 'config.vm.box' box will be fetched if it
   # doesn't already exist on the user's system.
-  config.vm.box_url = "http://files.vagrantup.com/precise64.box"
+  config.vm.box_url = "https://cloud-images.ubuntu.com/vagrant/saucy/current/saucy-server-cloudimg-amd64-vagrant-disk1.box"
   
   config.vm.define :gatlingo7 do |config|
     config.vm.host_name = "gatlingo7"

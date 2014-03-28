@@ -11,6 +11,8 @@ echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | su
 sudo apt-get -y install oracle-java7-installer
 sudo apt-get install oracle-java7-set-default
 sudo apt-get -y install maven
+sudo apt-get -y install collectd
+sudo cp /vagrant/collectd.conf /etc/collectd/collectd.conf
 cd
 sudo apt-get install -y git
 git clone https://github.com/gdbtek/setup-graphite.git

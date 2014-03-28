@@ -1,3 +1,5 @@
+ssh-keygen -R [127.0.0.1]:12347
+ssh-keygen -R [127.0.0.1]:23457
 vagrant up
 ./uploadProject.sh
 ./uploadGatling.sh
