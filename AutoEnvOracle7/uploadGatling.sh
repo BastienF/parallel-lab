@@ -7,3 +7,9 @@ scp -P 12347 -i ~/.vagrant.d/insecure_private_key -r "../vanillapull/"$1 vagrant
 
 upload gatling-json/
 upload scripts/
+upload gatling/pom.xml
+upload gatling/src/
+upload pom.xml
+upload webapp/pom.xml
+upload gatling/src
+upload gatling/pom.xml

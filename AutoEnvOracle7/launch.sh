@@ -18,7 +18,7 @@ launch () {
         
         sleep 1
         echo 'Loading gatling for the first time'
-        ssh -p 12347 -i ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1  'cd /home/vagrant/parallel-lab/vanillapull/gatling-json/gatling-highcharts/; mvn -pl pricingsimulation gatling:execute -Dgatling.simulationClass=PricingSimulation -Dip=192.168.17.3 -Dusers='$2' -Dimplementation='$1' -Diterations='$3' -DlogPath=/home/vagrant/datalog-'$launchDate' -Dduration='$4
+        ssh -p 12347 -i ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1  'cd /home/vagrant/parallel-lab/vanillapull/; mvn -pl gatling gatling:execute -Dgatling.simulationClass=PricingSimulation -Dip=192.168.17.3 -Dusers='$2' -Dimplementation='$1' -Diterations='$3' -DlogPath=/home/vagrant/datalog-'$launchDate' -Dduration='$4
         #ssh -p 23457 -i ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1 'wget "http://127.0.0.1:8080/services/stopper/stop?users='$2'" >> ~/result.csv'
 
         echo 'Rapport: '$1''
@@ -28,13 +28,13 @@ launch () {
         mkdir -p 'results/csv/'
         scp -P 12347 -i ~/.vagrant.d/insecure_private_key -r vagrant@127.0.0.1:/home/vagrant/datalog-$launchDate.json 'results/json/datalog-'$launchDate'.json'
         scp -P 12347 -i ~/.vagrant.d/insecure_private_key -r vagrant@127.0.0.1:/home/vagrant/datalog-$launchDate.csv 'results/csv/datalog-'$launchDate'.csv'
-        scp -P 12347 -i ~/.vagrant.d/insecure_private_key -r vagrant@127.0.0.1:/home/vagrant/parallel-lab/vanillapull/gatling-clean/gatling-highcharts/pricingsimulation/target/gatling/results/ 'results/'$1'_'$2'users_'$3'iter_results/'
-        ssh -p 12347 -i ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1  'rm -r /home/vagrant/parallel-lab/vanillapull/gatling-clean/gatling-highcharts/pricingsimulation/target/gatling/results/'
+        scp -P 12347 -i ~/.vagrant.d/insecure_private_key -r vagrant@127.0.0.1:/home/vagrant/parallel-lab/vanillapull/gatling/target/gatling/results/ 'results/'$1'_'$2'users_'$3'iter_results/'
+        ssh -p 12347 -i ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1  'rm -r /home/vagrant/parallel-lab/vanillapull/gatling/target/gatling/results/'
 
         echo 'Stopping remote tomcat'
         ssh -p 23457 -i ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1 'cd /home/vagrant/parallel-lab/vanillapull/; mvn -pl webapp tomcat7:undeploy  -Dimplementation='$1' -Diterations='$3' ; ~/apache-tomcat-7.0.52/bin/shutdown.sh'
 
-        #ssh -p 23458 -i ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1 'kill `lsof -t -i :9090`'
+        #ssh -p 23458 -i ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1 'kill `lsof -t -i :8080`'
         sleep 1
 }
 
@@ -46,7 +46,7 @@ launch_all() {
         launch pool $1 $2 $3;
 }
 
-launch_all 15 5000000 120;
+launch_all 15 5000000 30;
 <<COMMENT
 launch_all 15 1000 120;
 launch_all 15 1500 120;

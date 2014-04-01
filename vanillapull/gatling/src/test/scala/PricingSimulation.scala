@@ -3,11 +3,12 @@ import com.excilys.ebi.gatling.core.Predef._
 import com.excilys.ebi.gatling.http.Predef._
 import akka.util.duration._
 import bootstrap._
+import scala.concurrent.duration.Duration
 
 class PricingSimulation extends Simulation {
   val port = 8080
-  val users = Integer.valueOf(System.getProperty("users"));
-  val duration = 30
+  val users = Integer.valueOf(System.getProperty("users"))
+  val duration = System.getProperty("duration").toString.toInt seconds
 
   val httpConf = httpConfig
     .baseURL("http://" + System.getProperty("ip") + ":" + port)
@@ -46,7 +47,7 @@ class PricingSimulation extends Simulation {
   }
 
   val scn = scenario("Pricing")
-    .during(duration seconds) {
+    .during(duration) {
 	  feed(csv("maturity.csv").random)
       .feed(csv("stock.csv").random)
       .feed(strikeFeeder)

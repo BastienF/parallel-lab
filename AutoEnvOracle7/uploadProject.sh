@@ -9,5 +9,4 @@ upload pom.xml
 upload scripts/
 upload webapp/pom.xml
 upload webapp/src
-upload gatling/src
 upload gatling/pom.xml
