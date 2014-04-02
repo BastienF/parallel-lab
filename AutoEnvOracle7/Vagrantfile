@@ -24,9 +24,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.customize ["modifyvm", :id, "--cpus", 2]
       vb.memory = 1024
       config.vm.network "forwarded_port", guest: 22, host: 12347
+      config.vm.synced_folder ".", "/vagrant/", id: "core", :nfs => true,  :mount_options   => ['nolock,vers=3,udp']
+      config.vm.synced_folder "../vanillapull/", "/home/vagrant/parallel-lab/vanillapull/", id: "core", :nfs => true,  :mount_options   => ['nolock,vers=3,udp']
     end
 
-    config.vm.provision :shell, :privileged => false, :path => "gatling.sh"
+    #config.vm.provision :shell, :privileged => false, :path => "gatling.sh"
   end
   
   config.vm.define :servero7 do |config|
@@ -41,7 +43,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         config.vm.network :forwarded_port, guest: i, host: i
       end
     end
-    
-    config.vm.provision :shell, :privileged => false, :path => "server.sh"
+    config.vm.synced_folder ".", "/vagrant/", id: "core", :nfs => true,  :mount_options   => ['nolock,vers=3,udp']
+    config.vm.synced_folder "../vanillapull/", "/home/vagrant/parallel-lab/vanillapull/", id: "core", :nfs => true,  :mount_options   => ['nolock,vers=3,udp']
+    #config.vm.provision :shell, :privileged => false, :path => "server.sh"
   end
 end

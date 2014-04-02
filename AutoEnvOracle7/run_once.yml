@@ -1,0 +1,40 @@
+---
+- hosts: server
+  vars:
+    vagrant_path: /vagrant
+    provisioning_path: "{{ vagrant_path }}/provisioning"
+    vanillapull_src_path: "../vanillapull/"
+    vanillapull_dest_path: "/home/vagrant/parallel-lab/vanillapull/"
+    tomcat_path: "/home/vagrant/apache-tomcat-7.0.52/"
+  sudo: yes
+  user: vagrant
+  tasks:
+    - name: shutdown tomcat
+      command: bash {{ tomcat_path }}/bin/shutdown.sh
+      sudo: true
+    - name: startup tomcat
+      shell: JAVA_OPTS="-Dimplementation={{ implementation }} -Diterations={{ iterations }}" nohup {{ tomcat_path }}/bin/startup.sh &
+      sudo: true
+
+- hosts: gatling
+  vars:
+    vagrant_path: /vagrant
+    vanillapull_src_path: "../vanillapull/"
+    vanillapull_dest_path: "/home/vagrant/parallel-lab/vanillapull/"
+    results_dest_path: "{{ vagrant_path }}/results/"
+    results_src_path: "{{ vanillapull_dest_path }}/gatling/target/gatling/results/"
+  sudo: yes
+  user: vagrant
+  tasks:
+    - name: launch shoot
+      shell: cd {{vanillapull_dest_path}}; mvn -pl gatling gatling:execute -Dgatling.simulationClass=PricingSimulation -Dip=192.168.17.3 -Dusers={{ users }} -Dimplementation={{ implementation }} -Diterations={{ iterations }} -DlogPath=/home/vagrant/datalog-{{ launchDate }} -Dduration={{ duration }}
+    - name: clean reports 1
+      shell: rm -r {{ results_dest_path }}/{{ implementation }}_{{ users }}users_{{ iterations }}iter_results/; mkdir -p {{ results_dest_path }}/{{ implementation }}_{{ users }}users_{{ iterations }}iter_results/; mkdir -p {{ results_dest_path }}/json/; mkdir -p {{ results_dest_path }}/csv/
+    - name: clean reports 2
+      shell: cp /home/vagrant/datalog-{{ launchDate }}.json {{ results_dest_path }}/json/datalog-{{ launchDate }}.json
+    - name: clean reports 3
+      shell: cp /home/vagrant/datalog-{{ launchDate }}.csv {{ results_dest_path }}/csv/datalog-{{ launchDate }}.csv
+    - name: clean reports 4
+      command: cp -R {{ results_src_path }} {{ results_dest_path }}/{{ implementation }}_{{ users }}users_{{ iterations }}iter_results/
+    - name: clean reports 5
+      command: rm -r {{ results_src_path }}

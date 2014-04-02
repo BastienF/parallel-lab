@@ -1,0 +1,79 @@
+---
+- hosts: server
+  vars:
+    vagrant_path : /vagrant
+    provisioning_path: "{{ vagrant_path }}/provisioning"
+    graphite_state: "not_installed"
+    tomcat_state: "not_installed"
+  sudo: yes
+  user: vagrant
+  tasks:
+    - name: creating required paths
+      command: mkdir -p /home/vagrant/parallel-lab/vanillapull/gatling
+      command: mkdir -p /home/vagrant/parallel-lab/vanillapull/webapp
+    - name: update packages
+      apt: update_cache=yes
+    - name: ensure packages required are installed
+      apt: pkg={{ item }} state=latest
+      with_items:
+        - python-apt
+        - maven
+        - collectd
+        - git
+    - name: add java 7 repo
+      apt_repository: repo='ppa:webupd8team/java' state=present
+    - name: Accept Oracle License
+      shell: echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
+    - name: installing java 7
+      apt: pkg=oracle-java7-installer state=latest update-cache=yes force=yes
+    - name: set java 7 as default
+      apt: pkg=oracle-java7-set-default
+    - name: configure collectd
+      command: cp {{ provisioning_path }}/collectd.conf /etc/collectd/collectd.conf
+      sudo: true
+    - name: testif graphite is already installed
+      action: shell test -d /home/vagrant/setup-graphite/ && echo "\"installed\"" || echo "\"not_installed\""
+      register: graphite_state
+    - name: get graphite
+      command: git clone https://github.com/gdbtek/setup-graphite.git
+      when: ${graphite_state.stdout} == "not_installed"
+    - name: configure graphite
+      command: bash /home/vagrant/setup-graphite/ubuntu.bash --login 'root' --password 'root' --email 'bfi@octo.com'
+      when: ${graphite_state.stdout} == "not_installed"
+      sudo: true
+    - name: testif tomcat is already installed
+      action: shell test -d /home/vagrant/apache-tomcat-7.0.52/ && echo "\"installed\"" || echo "\"not_installed\""
+      register: tomcat_state
+    - name: download tomcat
+      get_url: url=http://archive.apache.org/dist/tomcat/tomcat-7/v7.0.52/bin/apache-tomcat-7.0.52.tar.gz dest=/home/vagrant/
+      when: ${tomcat_state.stdout} == "not_installed"
+    - name: untar tomcat
+      command: tar xvfz apache-tomcat-7.0.52.tar.gz
+      when: ${tomcat_state.stdout} == "not_installed"
+    - name: configure tomcat
+      command: cp {{ provisioning_path }}/tomcat-users.xml /home/vagrant/apache-tomcat-7.0.52/conf/
+
+- hosts: gatling
+  vars:
+    vagrant_path : /vagrant
+    provisioning_path: "{{ vagrant_path }}/provisioning"
+    vanillapull_src_path: "../vanillapull/"
+    vanillapull_dest_path: "/home/vagrant/parallel-lab/vanillapull/"
+  sudo: yes
+  user: vagrant
+  tasks:
+    - name: creating required paths
+      command: mkdir -p /home/vagrant/parallel-lab/vanillapull/gatling
+      command: mkdir -p /home/vagrant/parallel-lab/vanillapull/webapp
+    - name: update packages
+      apt: update_cache=yes
+    - name: ensure packages required are installed
+      apt: pkg={{ item }} state=latest
+      with_items:
+        - openjdk-7-jdk
+        - maven
+    - name: compile gatling-json/gatling
+      shell: cd /home/vagrant/parallel-lab/vanillapull/gatling-json/gatling/; mvn install
+    - name: compile gatling-json/gatling-highcharts
+      shell: cd /home/vagrant/parallel-lab/vanillapull/gatling-json/gatling-highcharts/; mvn install
+

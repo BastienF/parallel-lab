@@ -10,7 +10,6 @@
 	<modules>
 		<module>gatling-charts-highcharts</module>
 		<module>gatling-highcharts-maven-archetype</module>
-        <module>pricingsimulation</module>
     </modules>
 
 	<licenses>

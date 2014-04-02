@@ -1,0 +1,26 @@
+---
+- hosts: server
+  vars:
+    vagrant_path: /vagrant
+    provisioning_path: "{{ vagrant_path }}/provisioning"
+    vanillapull_src_path: "../vanillapull/"
+    vanillapull_dest_path: "/home/vagrant/parallel-lab/vanillapull/"
+    tomcat_path: "/home/vagrant/apache-tomcat-7.0.52/"
+  sudo: yes
+  user: vagrant
+  tasks:
+    - name: cp init tomcat script
+      command: mkdir -p {{ tomcat_path }}/conf/logs/
+      sudo: true
+    - name: shutdown tomcat
+      command: bash {{ tomcat_path }}/bin/shutdown.sh
+      sudo: true
+    - name: configure tomcat
+      command: cp {{ provisioning_path }}/tomcat-users.xml {{ tomcat_path }}/conf/
+    - name: startup tomcat
+      shell: JAVA_OPTS="-Dimplementation=mono -Diterations=5" nohup {{ tomcat_path }}/bin/startup.sh &
+      sudo: true
+    - name: undeploy webapp
+      shell: cd {{ vanillapull_dest_path }}; mvn -X -pl webapp tomcat7:undeploy  -Dimplementation=mono -Diterations=5
+    - name: deploy webapp
+      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp tomcat7:deploy  -Dimplementation=mono -Diterations=5

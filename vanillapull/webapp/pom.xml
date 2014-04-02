@@ -188,7 +188,8 @@
 				<version>2.1</version>
 				<configuration>
                     <url>http://localhost:8080/manager/text</url>
-                    <server>localhost</server>
+                    <username>tomcat</username>
+                    <password>password</password>
                     <path>/${project.build.finalName}</path>
 				</configuration>
 				<dependencies>
