@@ -11,10 +11,10 @@ launch () {
 
 launch_all() {
         launch akka $1 $2 $3;
-        #launch naive $1 $2 $3;
-        #launch mono $1 $2 $3;
-        #launch executor $1 $2 $3;
-        #launch pool $1 $2 $3;
+        launch naive $1 $2 $3;
+        launch mono $1 $2 $3;
+        launch executor $1 $2 $3;
+        launch pool $1 $2 $3;
 }
 
 launch_all 15 5000000 5;
