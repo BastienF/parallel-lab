@@ -1,7 +1,6 @@
 #!/bin/bash 
 
 vagrant up > vagrant.log
-#ansible-playbook -i hosts uploadProject.yml --private-key=~/.vagrant.d/insecure_private_key
 launchDate=`date '+%d-%m-%Y.%T'`
 ansible-playbook -i hosts -l server deploy_webapp.yml --private-key=~/.vagrant.d/insecure_private_key
 launch () {
@@ -18,7 +17,6 @@ launch_all() {
 }
 
 launch_all 15 5000000 5;
-#launch_all 15 50000000 5;
 <<COMMENT
 launch_all 15 1000 120;
 launch_all 15 1500 120;
@@ -63,4 +61,4 @@ launch_all 15 5000000 120;
 #launch_all 100 3000000 30;
 #launch_all 100 4000000 30;
 COMMENT
-#vagrant halt >> vagrant.log;
+vagrant halt >> vagrant.log;
