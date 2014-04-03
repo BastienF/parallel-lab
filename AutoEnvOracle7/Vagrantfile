@@ -39,6 +39,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.memory = 1024
       config.vm.network "forwarded_port", guest: 22, host: 23457
       config.vm.network "forwarded_port", guest: 80, host: 8087
+      config.vm.network "forwarded_port", guest: 8080, host: 8088
       for i in 10001..10010
         config.vm.network :forwarded_port, guest: i, host: i
       end

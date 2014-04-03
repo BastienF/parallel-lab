@@ -2,19 +2,34 @@
 - hosts: server
   vars:
     vagrant_path: /vagrant
-    provisioning_path: "{{ vagrant_path }}/provisioning"
-    vanillapull_src_path: "../vanillapull/"
-    vanillapull_dest_path: "/home/vagrant/parallel-lab/vanillapull/"
     tomcat_path: "/home/vagrant/apache-tomcat-7.0.52/"
+    jetty_path: "/home/vagrant/jetty-distribution-9.1.3.v20140225/"
   sudo: yes
   user: vagrant
   tasks:
     - name: shutdown tomcat
       command: bash {{ tomcat_path }}/bin/shutdown.sh
       sudo: true
+    - name: shutdown jetty
+      command: bash {{ jetty_path }}/bin/jetty.sh stop
+      notify: ${server}
+  handlers:
+    - name: tomcat
+      command: ls
+      notify: startup tomcat
+      sudo: false
+    - name: jetty
+      command: ls
+      notify: startup jetty
+      sudo: false
+
     - name: startup tomcat
       shell: JAVA_OPTS="-Dimplementation={{ implementation }} -Diterations={{ iterations }}" nohup {{ tomcat_path }}/bin/startup.sh &
       sudo: true
+
+    - name: startup jetty
+      command: bash {{ jetty_path }}/bin/jetty.sh start "-Dimplementation={{ implementation }} -Diterations={{ iterations }}"
+
 
 - hosts: gatling
   vars:

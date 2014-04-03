@@ -3,24 +3,51 @@
   vars:
     vagrant_path: /vagrant
     provisioning_path: "{{ vagrant_path }}/provisioning"
-    vanillapull_src_path: "../vanillapull/"
     vanillapull_dest_path: "/home/vagrant/parallel-lab/vanillapull/"
+    war_name: "vanillapull-1.0-SNAPSHOT.war"
     tomcat_path: "/home/vagrant/apache-tomcat-7.0.52/"
+    jetty_path: "/home/vagrant/jetty-distribution-9.1.3.v20140225/"
   sudo: yes
   user: vagrant
   tasks:
-    - name: cp init tomcat script
-      command: mkdir -p {{ tomcat_path }}/conf/logs/
-      sudo: true
     - name: shutdown tomcat
       command: bash {{ tomcat_path }}/bin/shutdown.sh
       sudo: true
+    - name: shutdown jetty
+      command: bash {{ jetty_path }}/bin/jetty.sh stop
+    - name: deploy
+      command: ls
+      notify: ${server}
+  handlers:
+    - name: tomcat
+      command: ls
+      notify: cp init tomcat script
+    - name: jetty
+      command: ls
+      notify: undeploy jetty webapp
+
+    - name: cp init tomcat script
+      command: mkdir -p {{ tomcat_path }}/conf/logs/
+      sudo: true
+      notify: configure tomcat
     - name: configure tomcat
       command: cp {{ provisioning_path }}/tomcat-users.xml {{ tomcat_path }}/conf/
+      notify: startup tomcat
     - name: startup tomcat
       shell: JAVA_OPTS="-Dimplementation=mono -Diterations=5" nohup {{ tomcat_path }}/bin/startup.sh &
       sudo: true
-    - name: undeploy webapp
+      notify: undeploy tomcat webapp
+    - name: undeploy tomcat webapp
       shell: cd {{ vanillapull_dest_path }}; mvn -X -pl webapp tomcat7:undeploy  -Dimplementation=mono -Diterations=5
-    - name: deploy webapp
+      notify: deploy tomcat webapp
+    - name: deploy tomcat webapp
       shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp tomcat7:deploy  -Dimplementation=mono -Diterations=5
+
+    - name: undeploy jetty webapp
+      shell: rm {{ jetty_path }}/webapps/{{ war_name }}
+      notify: deploy jetty webapp
+    - name: deploy jetty webapp
+      shell: cp {{ vanillapull_dest_path }}/webapp/target/{{ war_name }} {{ jetty_path }}/webapps/
+      notify: startup jetty
+    - name: startup jetty
+      command: bash {{ jetty_path }}/bin/jetty.sh start "-Dimplementation=mono -Diterations=5"
