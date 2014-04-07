@@ -107,7 +107,8 @@ class JsonDataWriter extends DataWriter with Logging {
   }
 
   override def onRequestRecord(requestRecord: RequestRecord) {
-    write(serialize(requestRecord))
+    if (requestRecord.requestStatus.toString == "OK")
+      write(serialize(requestRecord))
   }
 
   override def onFlushDataWriter {

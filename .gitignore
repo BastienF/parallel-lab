@@ -18,4 +18,5 @@ AutoEnvOracle7/share
 *~
 .vagrant
 vagrant.log
-
+*.log
+Fast1

@@ -45,6 +45,7 @@
 
     - name: undeploy jetty webapp
       shell: rm {{ jetty_path }}/webapps/{{ war_name }}
+      ignore_errors: True
       notify: deploy jetty webapp
     - name: deploy jetty webapp
       shell: cp {{ vanillapull_dest_path }}/webapp/target/{{ war_name }} {{ jetty_path }}/webapps/
