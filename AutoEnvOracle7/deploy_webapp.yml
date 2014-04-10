@@ -15,6 +15,9 @@
       sudo: true
     - name: shutdown jetty
       command: bash {{ jetty_path }}/bin/jetty.sh stop
+    - name: shutdown httpcore
+      command: wget http://localhost:8080/vanillapull-1.0-SNAPSHOT/stop
+      ignore_errors: yes
     - name: deploy
       command: ls
       notify: ${server}
@@ -25,6 +28,9 @@
     - name: jetty
       command: ls
       notify: undeploy jetty webapp
+    - name: httpcore
+      command: ls
+      notify: undeploy httpcore webapp
 
     - name: cp init tomcat script
       command: mkdir -p {{ tomcat_path }}/conf/logs/
@@ -38,10 +44,12 @@
       sudo: true
       notify: undeploy tomcat webapp
     - name: undeploy tomcat webapp
-      shell: cd {{ vanillapull_dest_path }}; mvn -X -pl webapp tomcat7:undeploy  -Dimplementation=mono -Diterations=5
+      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp tomcat7:undeploy  -Dimplementation=mono -Diterations=500000
       notify: deploy tomcat webapp
     - name: deploy tomcat webapp
-      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp tomcat7:deploy  -Dimplementation=mono -Diterations=5
+      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp tomcat7:deploy  -Dimplementation=mono -Diterations=500000
+    - name: undeploy httpcore webapp
+      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp clean install -Dimplementation=mono -Diterations=500000
 
     - name: undeploy jetty webapp
       shell: rm {{ jetty_path }}/webapps/{{ war_name }}
@@ -51,4 +59,4 @@
       shell: cp {{ vanillapull_dest_path }}/webapp/target/{{ war_name }} {{ jetty_path }}/webapps/
       notify: startup jetty
     - name: startup jetty
-      command: bash {{ jetty_path }}/bin/jetty.sh start "-Dimplementation=mono -Diterations=5"
+      command: bash {{ jetty_path }}/bin/jetty.sh start "-Dimplementation=mono -Diterations=500000"

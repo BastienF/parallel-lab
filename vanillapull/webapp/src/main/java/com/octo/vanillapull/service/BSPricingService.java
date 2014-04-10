@@ -27,7 +27,12 @@ public class BSPricingService implements PricingService {
 		return callPrice(spot, strike, interestRate, volatility, maturity);
 	}
 
-	/**
+    @Override
+    public void init() throws Exception {
+
+    }
+
+    /**
 	 * Black-Scholes formula
 	 * 
 	 * @param S

@@ -10,7 +10,7 @@ launchDate=`date '+%d-%m-%Y.%T'`
 server=$2
 scenario=$1
 
-if [ "$server" != "tomcat" ] && [ "$server" != "jetty" ]; then 
+if [ "$server" != "tomcat" ] && [ "$server" != "jetty" ] && [ "$server" != "httpcore" ]; then 
 	server="tomcat"
 fi
 
@@ -23,10 +23,9 @@ fi
 launch () {
 	      date
         echo "Run with iterations=$3 implementation=$1 users=$2 launchDate=$launchDate duration=$4 server=$server scenario=$scenario"
-        ansible-playbook -i hosts -l server run_once.yml --private-key=~/.vagrant.d/insecure_private_key --extra-vars 'iterations='$3' implementation='$1' users='$2' launchDate='$launchDate' duration='$4' server='$server' scenario='$scenario 
+        ansible-playbook -i hosts -l server run_once.yml --private-key=~/.vagrant.d/insecure_private_key --extra-vars 'iterations='$3' implementation='$1' users='$2' launchDate='$launchDate' duration='$4' server='$server' scenario='$scenario
         if [ "$?" = "0" ]; then
         	ansible-playbook -i hosts -l gatling run_once.yml --private-key=~/.vagrant.d/insecure_private_key --extra-vars 'iterations='$3' implementation='$1' users='$2' launchDate='$launchDate' duration='$4' server='$server' scenario='$scenario
-        a=3;
         else
         	echo "[ERROR] run_once of server failed !"
         fi

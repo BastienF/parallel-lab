@@ -99,7 +99,12 @@ public class NaiveMultiThreadedMonteCarlo implements PricingService {
 		return pricedValue;
 	}
 
-	public double computeMonteCarloIteration(double spot, double rate,
+    @Override
+    public void init() throws Exception {
+
+    }
+
+    public double computeMonteCarloIteration(double spot, double rate,
 			double volatility, double gaussian, double maturity) {
 		double result = spot
 				* Math.exp((rate - Math.pow(volatility, 2) * 0.5) * maturity

@@ -19,9 +19,9 @@ import java.io.FileOutputStream
 
 import com.excilys.ebi.gatling.core.config.GatlingConfiguration.configuration
 import com.excilys.ebi.gatling.core.config.GatlingFiles.simulationLogDirectory
-import com.excilys.ebi.gatling.core.result.message.{ RequestRecord, RunRecord, ScenarioRecord, ShortScenarioDescription }
+import com.excilys.ebi.gatling.core.result.message.{RequestRecord, RunRecord, ScenarioRecord, ShortScenarioDescription}
 import com.excilys.ebi.gatling.core.result.message.GroupRecord
-import com.excilys.ebi.gatling.core.result.message.RecordType.{ ACTION, GROUP, RUN, SCENARIO }
+import com.excilys.ebi.gatling.core.result.message.RecordType.{ACTION, GROUP, RUN, SCENARIO}
 import com.excilys.ebi.gatling.core.util.FileHelper.TABULATION_SEPARATOR
 import com.excilys.ebi.gatling.core.util.IOHelper.use
 import com.excilys.ebi.gatling.core.util.StringHelper.END_OF_LINE
@@ -33,6 +33,7 @@ object CsvDataWriter {
 
   val emptyField = " "
   val sanitizerPattern = """[\n\r\t]""".r
+
   def sanitize(input: String): String = Option(sanitizerPattern.replaceAllIn(input, " ")).getOrElse("")
 
   def serialize(requestRecord: RequestRecord) = {
@@ -106,14 +107,15 @@ class CsvDataWriter extends DataWriter with Logging {
   }
 
   override def onRequestRecord(requestRecord: RequestRecord) {
-    if (requestRecord.requestStatus.toString == "OK")
-      write(serialize(requestRecord))
+    write(serialize(requestRecord))
   }
 
   override def onFlushDataWriter {
 
     info("Received flush order")
 
-    use(os) { _ => flush }
+    use(os) {
+      _ => flush
+    }
   }
 }

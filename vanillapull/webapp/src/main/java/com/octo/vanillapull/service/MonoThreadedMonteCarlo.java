@@ -1,8 +1,5 @@
 package com.octo.vanillapull.service;
 
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
-import com.octo.vanillapull.monitoring.meters.MetersManager;
 import com.octo.vanillapull.util.StdRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,8 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
-import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.PostConstruct;
 
 /**
  * @author Henri Tremblay
@@ -62,6 +58,10 @@ public class MonoThreadedMonteCarlo implements PricingService {
 
 		return pricedValue;
 	}
+
+    @PostConstruct
+    public void init() throws Exception {
+    }
 
 	public double computeMonteCarloIteration(double spot, double rate,
 			double volatility, double gaussian, double maturity) {

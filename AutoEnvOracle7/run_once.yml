@@ -4,6 +4,7 @@
     vagrant_path: /vagrant
     tomcat_path: "/home/vagrant/apache-tomcat-7.0.52/"
     jetty_path: "/home/vagrant/jetty-distribution-9.1.3.v20140225/"
+    vanillapull_dest_path: "/home/vagrant/parallel-lab/vanillapull/"
   sudo: yes
   user: vagrant
   tasks:
@@ -12,16 +13,20 @@
       sudo: true
     - name: shutdown jetty
       command: bash {{ jetty_path }}/bin/jetty.sh stop
+    - name: shutdown httpcore
+      command: wget http://localhost:8080/vanillapull-1.0-SNAPSHOT/stop
+      ignore_errors: yes
       notify: ${server}
   handlers:
     - name: tomcat
       command: ls
       notify: startup tomcat
-      sudo: false
     - name: jetty
       command: ls
       notify: startup jetty
-      sudo: false
+    - name: httpcore
+      command: ls
+      notify: startup httpcore
 
     - name: startup tomcat
       shell: JAVA_OPTS="-Dimplementation={{ implementation }} -Diterations={{ iterations }}" nohup {{ tomcat_path }}/bin/startup.sh &
@@ -30,6 +35,10 @@
     - name: startup jetty
       command: bash {{ jetty_path }}/bin/jetty.sh start "-Dimplementation={{ implementation }} -Diterations={{ iterations }}"
 
+    - name: startup httpcore
+      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java -Dimplementation={{ implementation }} -Diterations={{ iterations }} 1>std.log 2>err.log
+      async: 1000000000000000000
+      poll: 0
 
 - hosts: gatling
   vars:
