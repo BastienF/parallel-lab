@@ -1,0 +1,169 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="nv.d3.css" type="text/css" media="screen" />
+    <style type="text/css">
+    a {
+        color: #00FF00;
+    }
+    input, button, select, option {
+        background-color: #222222;
+        color: #00FF00;
+        -moz-border-radius:5px;
+        -webkit-border-radius:5px;
+        -o-border-radius:5px;
+        border-radius:5px;
+    }
+    .dotted {
+        border-style:dashed;
+        border-color:#00FF00;
+        border-width:1px;
+        padding:5px;
+        margin:5px
+    }
+    </style>
+
+    <script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
+    <script type="text/javascript">
+    var rawdata = "";
+
+    function formatNumber(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+    }
+
+    function launchBuild(data2) {
+        rawdata = data2;
+        var container = document.getElementById("container");
+        var mySelect = document.getElementById("mySelect");
+        var mySelectValue = mySelect.options[mySelect.selectedIndex].innerHTML;
+        var innerHTML = '<div class="dotted">';
+        innerHTML += "<h3>" + mySelectValue + "</h3>";
+
+        innerHTML += "<strong>Server</strong>: ";
+        if (mySelectValue.search(/tomcat/i) >= 0) {
+            innerHTML += "Tomcat";
+        } else if (mySelectValue.search(/jetty/i) >= 0) {
+            innerHTML += "Jetty";
+        } else if (mySelectValue.search(/httpcore/i) >= 0) {
+            innerHTML += "Httpcore";
+        }
+
+        var re = /.+nbThreads([0-9]+).+/i;
+        var nbThreads = mySelectValue.replace(re, "$1");
+        innerHTML += '<br/><strong>Threads number</strong>: ' + nbThreads;
+
+        var distinctsIters = _.chain(rawdata).map(function(elt) {
+            return elt.Iterations
+        }).uniq().value();
+        var distinctsUsers = _.chain(rawdata).map(function(elt) {
+            return elt.Users
+        }).uniq().value();
+        innerHTML += '<br/><strong>Interations</strong>: ';
+        _.each(distinctsIters, function(elt) {
+            innerHTML += formatNumber(elt) + ' ';
+        })
+        innerHTML += '<br/><strong>Users</strong>: ';
+        _.each(distinctsUsers, function(elt) {
+            innerHTML += elt + ' ';
+        })
+        innerHTML += '<br/><br/>';
+
+        var resultImplem = {
+            akka: [],
+            mono: [],
+            naive: [],
+            executor: [],
+            pool: []
+        };
+
+        var result = _.groupBy(_.reject(data2, function(el) {
+            return el.t == "metric" || el.Status == "KO"
+        }), function(el) {
+            return el.Implementation
+        })
+
+        _.each(result, function(list) {
+            list.total = _.reduce(list, function(acc, item) {
+                return acc + parseInt(item.ResponseTime)
+            }, 0) / list.length
+            innerHTML += list[0].Implementation + " : " + list.total + "ms<br/>";
+        })
+
+        innerHTML += '</div>';
+        container.innerHTML += innerHTML;
+
+    }
+
+    var reportsList;
+
+    function listAllReports() {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    reportsList = xhr.responseText;
+                    document.getElementById("mySelect").innerHTML = reportsList;
+                } else {
+                    console.error(xhr);
+                }
+            }
+        };
+        xhr.open("GET", "http://localhost/cgi-bin/list_reports_html_options.sh", true);
+        xhr.send();
+    }
+
+    listAllReports();
+
+    function launch() {
+        var e2 = document.getElementById("mySelect");
+        var mySelectValue = e2.options[e2.selectedIndex].value;
+
+        function loadJSON(success, error, file) {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        if (success) {
+                            var jsonFile = xhr.responseText;
+                            if (jsonFile[0] != "[")
+                                jsonFile = ("[" + jsonFile.substring(0, jsonFile.length - 2) + "]");
+                            success(JSON.parse(jsonFile));
+                        }
+                    } else {
+                        if (error)
+                            error(xhr);
+                    }
+                }
+            };
+            xhr.open("GET", file, true);
+            xhr.send();
+        }
+
+        loadJSON(
+            function(data2) {
+                launchBuild(data2)
+            },
+
+            function(xhr) {
+                console.error(xhr);
+            },
+
+            mySelectValue
+        );
+    }
+    </script>
+</head>
+
+<body style="margin:0; padding:15px; color:#00FF00; background-color:black; font-family:Monospace; font-size:13px;">
+    <div class="dotted"><a href="http://localhost/cgi-bin/list_reports.sh"> << Back to reports list</a>
+        </div>
+    <div id="father">
+        <div class="dotted" id="container">
+            <select id="mySelect">
+            </select>
+            <input type="button" name="bouton" value="Afficher" onClick="launch()">
+        </div>
+    </div>
+</body>
+
+</html>

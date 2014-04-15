@@ -1,0 +1,472 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="nv.d3.css" type="text/css" media="screen" />
+    <style type="text/css">
+    a {
+        color: #00FF00;
+    }
+    input, button, select, option {
+        background-color: #222222;
+        color: #00FF00;
+        -moz-border-radius:5px;
+        -webkit-border-radius:5px;
+        -o-border-radius:5px;
+        border-radius:5px;
+    }
+    .dotted {
+        border-style:dashed;
+        border-color:#00FF00;
+        border-width:1px;
+        padding:5px;
+        margin:5px
+    }
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="nv.d3.min.js"></script>
+    <script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
+
+    <script type="text/javascript">
+    var rawdata = ""
+    var rawdata2 = ""
+
+
+        function formatNumber(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+        }
+
+        function getSearchParameters() {
+            var prmstr = window.location.search.substr(1);
+            return prmstr != null && prmstr != "" ? transformToAssocArray(prmstr) : {};
+        }
+
+        function transformToAssocArray(prmstr) {
+            var params = {};
+            var prmarr = prmstr.split("&");
+            for (var i = 0; i < prmarr.length; i++) {
+                var tmparr = prmarr[i].split("=");
+                params[tmparr[0]] = tmparr[1];
+            }
+            return params;
+        }
+
+    var params = getSearchParameters();
+
+    function launchGraphBuild(data2, first) {
+        if (first)
+            rawdata = data2;
+        else
+            rawdata2 = data2;
+        var e = document.getElementById("xAxis");
+        var xAxis = e.options[e.selectedIndex].value;
+        var e2 = document.getElementById("yAxis");
+        var yAxis = e2.options[e2.selectedIndex].value;
+        var e3 = document.getElementById("percentile");
+        var percentile = e3.options[e3.selectedIndex].value;
+
+        var selectIter = document.getElementById("nbIterationsFilter");
+        var selectUser = document.getElementById("nbUsersFilter");
+
+        selectIter.innerHTML = "";
+        selectUser.innerHTML = "";
+
+        var distinctsItersFirst = _.chain(rawdata).map(function(elt) {
+            return elt.Iterations
+        }).uniq().value();
+        var distinctsUsersFirst = _.chain(rawdata).map(function(elt) {
+            return elt.Users
+        }).uniq().value();
+
+
+        var distinctsItersSecond = _.chain(rawdata2).map(function(elt) {
+            return elt.Iterations
+        }).uniq().value();
+        var distinctsUsersSecond = _.chain(rawdata2).map(function(elt) {
+            return elt.Users
+        }).uniq().value();
+
+
+        var distinctsIters = _.union(distinctsItersFirst, distinctsItersSecond);
+        var distinctsUsers = _.union(distinctsUsersFirst, distinctsUsersSecond);
+
+        var innerHTML = "";
+
+
+        function setDesc(distinctsItersPar, distinctsUsersPar, id, reportName) {
+            var innerHTML = "<strong>Server</strong>: ";
+            if (reportName.search(/tomcat/i) >= 0) {
+                innerHTML += "Tomcat";
+            } else if (reportName.search(/jetty/i) >= 0) {
+                innerHTML += "Jetty";
+            } else if (reportName.search(/httpcore/i) >= 0) {
+                innerHTML += "Httpcore";
+            }
+            var re = /.+nbThreads([0-9]+).+/i;
+            var nbThreads = reportName.replace(re, "$1");
+            innerHTML += ' - <strong>Threads number</strong>: ' + nbThreads;
+
+            innerHTML += ' - <strong>Interations</strong>: ';
+            _.each(distinctsItersPar, function(elt) {
+                innerHTML += formatNumber(elt) + ' ';
+            })
+            innerHTML += ' - <strong>Users</strong>: ';
+            _.each(distinctsUsersPar, function(elt) {
+                innerHTML += elt + ' ';
+            })
+            innerHTML += '<br/>';
+
+            document.getElementById(id).innerHTML = innerHTML;
+        }
+
+        setDesc(distinctsItersFirst, distinctsUsersFirst, "firstDesc", document.getElementById("reportURL").value);
+        setDesc(distinctsItersSecond, distinctsUsersSecond, "secondDesc", document.getElementById("reportURL2").value);
+
+
+        _.each(distinctsIters, function(elt) {
+            var opt = document.createElement('option');
+            opt.value = elt;
+            opt.innerHTML = elt;
+            selectIter.appendChild(opt);
+        })
+        _.each(distinctsUsers, function(elt) {
+            var opt = document.createElement('option');
+            opt.value = elt;
+            opt.innerHTML = elt;
+            selectUser.appendChild(opt);
+        })
+
+        function data() {
+            var resultImplem = {
+                akka: [],
+                mono: [],
+                naive: [],
+                executor: [],
+                pool: []
+            };
+
+
+
+            var result = _.groupBy(_.reject(data2, function(el) {
+                return el.t == "metric" || el.Status == "KO"
+            }), function(el) {
+                return el.Implementation + '-' + (xAxis == "byIteration" ? el.Iterations : el.Users)
+            })
+            if (percentile != "none") {
+                _.each(result, function(list) {
+                    list.percentileList = _.sortBy(list, function(num) {
+                        return parseInt(num.ResponseTime);
+                    })
+                    var percentileValue = (percentile == "95" ? 5 : 10);
+                    var numberToRemove = list.length * percentileValue / 100;
+                    list.percentileList.splice(list.percentileList.length - numberToRemove, numberToRemove)
+                })
+            }
+
+            _.each(result, function(list) {
+                var listToUse = (percentile != "none" ? list.percentileList : list);
+                if (yAxis == "meanTime") {
+                    list.total = _.reduce(listToUse, function(acc, item) {
+                        return acc + parseInt(item.ResponseTime)
+                    }, 0) / listToUse.length
+                } else {
+                    list.total = listToUse.length
+                }
+            })
+            _.each(result, function(elt) {
+                resultImplem[elt[0].Implementation].push({
+                    x: parseInt(xAxis == "byIteration" ? elt[0].Iterations : elt[0].Users),
+                    y: elt.total
+                });
+            })
+
+
+            var returned = [];
+
+            function pushReturned(name, displayName, displayColor) {
+                if (resultImplem[name].length > 0)
+                    returned.push({
+                        values: resultImplem[name],
+                        key: displayName,
+                        color: displayColor,
+                    });
+            }
+            pushReturned('akka', 'Akka', '#ff7f0e');
+            pushReturned('mono', 'Mono', '#f07ffe');
+            pushReturned('naive', 'Naive', '#0f7f0e');
+            pushReturned('executor', 'Executor', '#007fff');
+            pushReturned('pool', 'Pool', '#55ff55');
+
+            return returned;
+        }
+
+        nv.addGraph(function() {
+            var chart = nv.models.lineChart()
+                .useInteractiveGuideline(true);
+
+            chart.xAxis
+                .axisLabel((xAxis == "byIteration" ? 'Iterations' : 'Users'))
+                .tickFormat(d3.format(',r'));
+
+            chart.yAxis
+                .axisLabel((yAxis == "meanTime" ? 'Mean time (ms)' : "Request"))
+                .tickFormat(d3.format('.02f'));
+            chart.margin({
+                left: 80
+            })
+            var chartElt = first ? '#chart svg' : '#chart2 svg';
+            d3.select(chartElt)
+                .datum(data())
+                .transition().duration(1200)
+                .call(chart);
+
+            nv.utils.windowResize(chart.update);
+
+            return chart;
+        });
+    }
+
+
+    function launchThreadCount(form, second) {
+        if (!second)
+            launchThreadCount(form, true);
+
+        function data() {
+            var e = document.getElementById("nbIterationsFilter");
+            var iterationsFilter = e.options[e.selectedIndex].value;
+            e = document.getElementById("nbUsersFilter");
+            var usersFilter = e.options[e.selectedIndex].value;
+
+            var localData = second ? rawdata2 : rawdata;
+
+            var resultImplem = {
+                akka: [],
+                mono: [],
+                naive: [],
+                executor: [],
+                pool: []
+            };
+
+            var result = _.reject(localData, function(el) {
+                return el.t != "metric" || el.Iterations != iterationsFilter || el.Users != usersFilter
+            })
+            _.each(result, function(elt) {
+                resultImplem[elt.Implementation].push({
+                    x: parseInt(elt.D),
+                    y: parseInt(elt["jvm.thread.ThreadCount"])
+                })
+            })
+
+            var returned = [];
+
+            function pushReturned(name, displayName, displayColor) {
+                if (resultImplem[name].length > 0)
+                    returned.push({
+                        values: resultImplem[name],
+                        key: displayName,
+                        color: displayColor,
+                    });
+            }
+            pushReturned('akka', 'Akka', '#ff7f0e');
+            pushReturned('mono', 'Mono', '#f07ffe');
+            pushReturned('naive', 'Naive', '#0f7f0e');
+            pushReturned('executor', 'Executor', '#007fff');
+            pushReturned('pool', 'Pool', '#55ff55');
+
+            return returned;
+        }
+
+        nv.addGraph(function() {
+            var chart = nv.models.lineChart()
+                .useInteractiveGuideline(true);
+
+            chart.xAxis
+                .axisLabel('Time')
+                .tickFormat(d3.format(',r'));
+
+            chart.yAxis
+                .axisLabel('Thread Count')
+                .tickFormat(d3.format('0.2f'));
+            chart.margin({
+                left: 80
+            })
+            var chartElt = second ? '#chartThreadCount2 svg' : '#chartThreadCount svg'
+            d3.select(chartElt)
+                .datum(data())
+                .transition().duration(1200)
+                .call(chart);
+
+            nv.utils.windowResize(chart.update);
+
+            return chart;
+        });
+    }
+
+    function launch(form2) {
+        function loadJSON(success, error, file) {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        if (success) {
+                            var jsonFile = xhr.responseText;
+                            if (jsonFile[0] != "[")
+                                jsonFile = ("[" + jsonFile.substring(0, jsonFile.length - 2) + "]");
+                            success(JSON.parse(jsonFile));
+                        }
+                    } else {
+                        if (error)
+                            error(xhr);
+                    }
+                }
+            };
+            xhr.open("GET", file, true);
+            xhr.send();
+        }
+
+        loadJSON(
+            function(data2) {
+                launchGraphBuild(data2, true)
+            },
+
+            function(xhr) {
+                console.error(xhr);
+            },
+
+            form2.reportURL.value
+        );
+
+        var chart2Block = document.getElementById("chart2Block");
+        var chartBlock = document.getElementById("chartBlock");
+        var chartThreadCountBlock = document.getElementById("chartThreadCountBlock");
+        var chartThreadCount2Block = document.getElementById("chartThreadCount2Block");
+        if (form2.reportURL2.value != "") {
+            loadJSON(
+                function(data2) {
+                    launchGraphBuild(data2, false)
+                },
+
+                function(xhr) {
+                    console.error(xhr);
+                },
+
+                form2.reportURL2.value
+            );
+
+
+            chart2Block.style.height = "50%";
+            chartBlock.style.height = "50%";
+            chartThreadCountBlock.style.height = "50%";
+            chartThreadCount2Block.style.height = "50%";
+            chart2Block.style.display = "block";
+            chartThreadCount2Block.style.display = "block";
+        } else {
+            chartBlock.style.height = "100%";
+            chart2Block.style.height = "0%";
+            chartThreadCountBlock.style.height = "100%";
+            chartThreadCount2Block.style.height = "0%";
+            chart2Block.style.display = "none";
+            chartThreadCount2Block.style.display = "none";
+        }
+    }
+    </script>
+</head>
+
+<body style="margin:0; padding:15px; color:#00FF00; background-color:black; font-family:Monospace; font-size:13px;">
+    <div style="height: 88%">
+        <div class="dotted">
+            <a href="http://localhost/cgi-bin/list_reports.sh"><< Back to reports list</a> --- <a href="http://localhost/parallel-lab/reports_one_shot.html"> Go to reports one shot >> </a>
+        </div>
+        <div style="float:left; width:70%;">
+            <div class="dotted">
+                <form name="chooseReport">
+                    <label for="reportURL">Rapport:</label>
+                    <input type="text" name="reportURL" id="reportURL" value="" size="80" />
+                    <label for="xAxis">x :</label>
+                    <select name="xAxis" id="xAxis">
+                        <option value="byIteration">By iteration</option>
+                        <option value="byUser">By user</option>
+                    </select>
+                    <label for="yAxis">y :</label>
+                    <select name="yAxis" id="yAxis">
+                        <option value="meanTime">Mean Time</option>
+                        <option value="requestNumber">Request Number</option>
+                    </select>
+                    <label for="percentile">Percentile</label>
+                    <select name="percentile" id="percentile">
+                        <option value="none">None</option>
+                        <option value="95">95</option>
+                        <option value="90">90</option>
+                    </select>
+                    <input type="button" name="bouton" value="Afficher" onClick="launch(chooseReport)">
+                    <br/>
+
+                    <label for="reportURL2">Rapport:</label>
+                    <input type="text" name="reportURL2" id="reportURL2" value="" size="80" />
+                </form>
+            </div>
+            <style>
+            #chart svg {
+            }
+            #chart2 svg {
+            }
+            </style>
+
+            <div class="dotted">
+
+
+                <div id="chartBlock">
+                    <div>
+                        <p id="firstDesc" style="margin:0; padding:0;"></p>
+                    </div>
+                    <div id="chart" style="background-color:white; height:95%;">
+                        <svg></svg>
+                    </div>
+                </div>
+
+
+
+                <div id="chart2Block">
+                    <p id="secondDesc" style="margin:0; padding:0;"></p>
+                    <div id="chart2" style="background-color:white; height:90%;">
+                        <svg></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="float:left; width:30%;">
+            <div class="dotted">
+                <form name="chooseThreadProfiling">
+                    <label for="nbIterationsFilter">Iterations</label>
+                    <select name="nbIterationsFilter" id="nbIterationsFilter">
+                    </select>
+                    <label for="nbUsersFilter">Users</label>
+                    <select name="nbUsersFilter" id="nbUsersFilter">
+                    </select>
+                    <br/>
+                    <input type="button" name="bouton" value="Afficher" onClick="launchThreadCount(chooseThreadProfiling)">
+                </form>
+            </div>
+            <div class="dotted">
+                <div id="chartThreadCountBlock">
+                    <p id="firstDesc2" style="margin:0; padding:0;">&nbsp;</p>
+                    <div id="chartThreadCount" style="background-color:white; height:95%;">
+                        <svg></svg>
+                    </div>
+                </div>
+                <div id="chartThreadCount2Block">
+                    <p id="secondDesc2" style="margin:0; padding:0;">&nbsp;</p>
+                    <div id="chartThreadCount2" style="background-color:white; height:90%;">
+                        <svg></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script type="text/javascript">
+document.getElementById("reportURL").value = params.reportURL;
+launch(chooseReport);
+</script>
+
+</html>

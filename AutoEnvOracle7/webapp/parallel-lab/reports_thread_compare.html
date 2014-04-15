@@ -1,0 +1,234 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="nv.d3.css" type="text/css" media="screen" />
+    <style type="text/css">
+    a {
+        color: #00FF00;
+    }
+    input, button, select, option {
+        background-color: #222222;
+        color: #00FF00;
+        -moz-border-radius:5px;
+        -webkit-border-radius:5px;
+        -o-border-radius:5px;
+        border-radius:5px;
+    }
+    .dotted {
+        border-style:dashed;
+        border-color:#00FF00;
+        border-width:1px;
+        padding:5px;
+        margin:5px
+    }
+    </style>
+
+    <script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
+    <script type="text/javascript">
+    var rawdata = "";
+    var rawdata2 = "";
+
+    function formatNumber(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+    }
+
+    function buildImplTable(distinctsIters, distinctsUsers, result1, result2, impl, color) {
+        var innerHTML = '<tr style="background-color:' + color + '; color:black"><th>' + impl + '</th>';
+        _.each(distinctsIters, function(elt) {
+            innerHTML += '<th>' + formatNumber(elt) + '</th>';
+        })
+        innerHTML += '</tr>';
+        _.each(distinctsUsers, function(elt) {
+            innerHTML += '<tr style="background-color:' + color + '; color:black"><th>' + elt + '</th>';
+            _.each(distinctsIters, function(eltIter) {
+                var value1 = parseInt(result1[impl + '-' + eltIter + '-' + elt].total);
+                var tab2 = result2[impl + '-' + eltIter + '-' + elt];
+                if (tab2 !== undefined) {
+                var value2 = parseInt(result2[impl + '-' + eltIter + '-' + elt].total);
+                var diff = (value2 - value1);
+                innerHTML += '<td>' + formatNumber(value1) + '/' + formatNumber(value2) + '<strong><span style="color:' + (diff >= 0 ? '#00CC00' : '#FF0000') + '">(' + parseInt(100 * diff/value1) + '%)</span><strong></td>';
+            } else {
+                alert("R2 : Iter: " + eltIter + "/Users: " + elt + " undefined for " + impl);
+                innerHTML += '<td>' + formatNumber(value1) + '/<strong><span style="color:red;">-' + '(-)</span></strong></td>';
+            }
+
+                
+            })
+            innerHTML += '</tr>';
+        })
+        return innerHTML;
+    }
+
+    function launchBuild(data2, data3) {
+        rawdata = data2;
+        rawdata2 = data3;
+        var container = document.getElementById("container");
+        var report1 = document.getElementById("report1");
+        var report2 = document.getElementById("report2");
+        var report1Value = report1.options[report1.selectedIndex].innerHTML;
+        var report2Value = report2.options[report2.selectedIndex].innerHTML;
+        var innerHTML = '<div class="dotted">';
+        innerHTML += "<strong>Server</strong>: ";
+        if (report1Value.search(/tomcat/i) >= 0) {
+            if (report2Value.search(/tomcat/i) < 0) {
+                alert('Error : Servers differ');
+            }
+            innerHTML += "Tomcat";
+        } else if (report1Value.search(/jetty/i) >= 0) {
+            if (report2Value.search(/jetty/i) < 0) {
+                alert('Error : Servers differ');
+            }
+            innerHTML += "Jetty";
+        } else if (report1Value.search(/httpcore/i) >= 0) {
+            if (report2Value.search(/httpcore/i) < 0) {
+                alert('Error : Servers differ');
+            }
+            innerHTML += "Httpcore";
+        }
+
+        var re = /.+nbThreads([0-9]+).+/i;
+        innerHTML += '<br/><strong>R1</strong>: ' + report1Value;
+        innerHTML += '<br/><strong>R2</strong>: ' + report2Value;
+        var nbThreads = report1Value.replace(re, "$1");
+        innerHTML += '<br/><strong>Threads number R1</strong>: ' + nbThreads;
+        nbThreads = report2Value.replace(re, "$1");
+        innerHTML += '<br/><strong>Threads number R2</strong>: ' + nbThreads;
+        innerHTML += '<br/><br/>';
+        innerHTML += '</div>';
+
+        var distinctsIters = _.chain(rawdata).map(function(elt) {
+            return elt.Iterations
+        }).uniq().value();
+        var distinctsUsers = _.chain(rawdata).map(function(elt) {
+            return elt.Users
+        }).uniq().value();
+
+
+
+        var result1 = _.groupBy(_.reject(data2, function(el) {
+            return el.t == "metric" || el.Status == "KO"
+        }), function(el) {
+            return el.Implementation + '-' + el.Iterations + '-' + el.Users
+        })
+
+        var result2 = _.groupBy(_.reject(data3, function(el) {
+            return el.t == "metric" || el.Status == "KO"
+        }), function(el) {
+            return el.Implementation + '-' + el.Iterations + '-' + el.Users
+        })
+
+
+        _.each(result1, function(list) {
+            list.total = _.reduce(list, function(acc, item) {
+                return acc + parseInt(item.ResponseTime)
+            }, 0) / list.length
+        })
+        _.each(result2, function(list) {
+            list.total = _.reduce(list, function(acc, item) {
+                return acc + parseInt(item.ResponseTime)
+            }, 0) / list.length
+        })
+        innerHTML += '<table border="1">'
+        var impls = {"akka" : "#ff7f0e", "mono" : "#f07ffe", "naive" : "#0f7f0e", "executor" : "#007fff", "pool" : "#55ff55"};
+        for (var impl in impls) {
+            innerHTML += buildImplTable(distinctsIters, distinctsUsers, result1, result2, impl, impls[impl]);
+        }
+        innerHTML += '</table>'
+        container.innerHTML = innerHTML;
+    }
+
+    var reportsList;
+
+    function listAllReports() {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    reportsList = xhr.responseText;
+                    document.getElementById("report1").innerHTML = reportsList;
+                    document.getElementById("report2").innerHTML = reportsList;
+                } else {
+                    console.error(xhr);
+                }
+            }
+        };
+        xhr.open("GET", "http://localhost/cgi-bin/list_reports_html_options.sh", true);
+        xhr.send();
+    }
+
+    listAllReports();
+
+    function launch() {
+        var report1 = document.getElementById("report1");
+        var report1Value = report1.options[report1.selectedIndex].value;
+
+
+        var report2 = document.getElementById("report2");
+        var report2Value = report2.options[report2.selectedIndex].value;
+
+
+        function loadJSON(success, error, file) {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        if (success) {
+                            var jsonFile = xhr.responseText;
+                            if (jsonFile[0] != "[")
+                                jsonFile = ("[" + jsonFile.substring(0, jsonFile.length - 2) + "]");
+                            success(JSON.parse(jsonFile));
+                        }
+                    } else {
+                        if (error)
+                            error(xhr);
+                    }
+                }
+            };
+            xhr.open("GET", file, true);
+            xhr.send();
+        }
+
+        loadJSON(
+            function(data2) {
+                loadJSON(
+                    function(data3) {
+                        launchBuild(data2, data3)
+                    },
+
+                    function(xhr) {
+                        console.error(xhr);
+                    },
+
+                    report2Value
+                );
+            },
+
+            function(xhr) {
+                console.error(xhr);
+            },
+
+            report1Value
+        );
+    }
+    </script>
+</head>
+
+<body style="margin:0; padding:15px; color:#00FF00; background-color:black; font-family:Monospace; font-size:13px;">
+    <div class="dotted">
+        <a href="http://localhost/cgi-bin/list_reports.sh">
+            << Back to reports list</a>
+    </div>
+    <div id="father">
+        <div class="dotted">
+            <select id="report1">
+            </select>
+            <select id="report2">
+            </select>
+            <input type="button" name="bouton" value="Afficher" onClick="launch()">
+        </div>
+        <div class="dotted" id="container">
+        </div>
+    </div>
+</body>
+
+</html>
