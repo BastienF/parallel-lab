@@ -1,10 +1,10 @@
 package com.octo.vanillapull.httpcoreserver.nio.requesthandler;
 
 import com.octo.vanillapull.httpcoreserver.nio.AsyncServer;
+import com.octo.vanillapull.httpcoreserver.nio.Server;
 import com.octo.vanillapull.httpcoreserver.nio.dao.InstrumentDAO;
 import com.octo.vanillapull.model.Instrument;
 import com.octo.vanillapull.service.PricingService;
-import com.octo.vanillapull.util.StdRandom;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -20,7 +20,6 @@ import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.reflect.generics.tree.VoidDescriptor;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -48,7 +47,37 @@ public class PricerHandler implements HttpAsyncRequestHandler<HttpRequest> {
 
     @Override
     public void handle(final HttpRequest request, final HttpAsyncExchange httpexchange, final HttpContext context) {
-        AsyncServer.pool.submit(new HandleRequestTask(request, httpexchange, context));
+        if (Server.POLLED)
+            AsyncServer.pool.submit(new HandleRequestTask(request, httpexchange, context));
+        else
+            executeRequest(request, httpexchange, context);
+    }
+
+    private void executeRequest(final HttpRequest request, final HttpAsyncExchange httpexchange, final HttpContext context) {
+        String symbol = null;
+        double maturity = 0;
+        double strike = 0;
+        List<NameValuePair> parameters = null;
+        try {
+            parameters = URLEncodedUtils.parse(new URI(
+                    request.getRequestLine().getUri()), HTTP.UTF_8);
+        } catch (URISyntaxException e) {
+            logger.error("Failed to parse requested URL : " + e.getMessage());
+        }
+        for (NameValuePair nameValuePair : parameters) {
+            if (nameValuePair.getName().equals("symbol"))
+                symbol = nameValuePair.getValue();
+            else if (nameValuePair.getName().equals("maturity"))
+                maturity = Double.parseDouble(nameValuePair.getValue());
+            else if (nameValuePair.getName().equals("strike"))
+                strike = Double.parseDouble(nameValuePair.getValue());
+        }
+        Instrument instrument = _instrumentDAO.getInstrument(symbol);
+        Double result = _pricingService.calculatePrice(maturity, instrument.getSpot(), strike, instrument.getVolatility());
+        HttpResponse response = httpexchange.getResponse();
+        response.setStatusCode(HttpStatus.SC_OK);
+        response.setEntity(new NStringEntity(result.toString(), ContentType.create("text/html", "UTF-8")));
+        httpexchange.submitResponse();
     }
 
     private class HandleRequestTask implements Callable<Void> {
@@ -64,30 +93,7 @@ public class PricerHandler implements HttpAsyncRequestHandler<HttpRequest> {
 
         @Override
         public Void call() {
-            String symbol = null;
-            double maturity = 0;
-            double strike = 0;
-            List<NameValuePair> parameters = null;
-            try {
-                parameters = URLEncodedUtils.parse(new URI(
-                        _request.getRequestLine().getUri()), HTTP.UTF_8);
-            } catch (URISyntaxException e) {
-                logger.error("Failed to parse requested URL : " + e.getMessage());
-            }
-            for (NameValuePair nameValuePair : parameters) {
-                if (nameValuePair.getName().equals("symbol"))
-                    symbol = nameValuePair.getValue();
-                else if (nameValuePair.getName().equals("maturity"))
-                    maturity = Double.parseDouble(nameValuePair.getValue());
-                else if (nameValuePair.getName().equals("strike"))
-                    strike = Double.parseDouble(nameValuePair.getValue());
-            }
-            Instrument instrument = _instrumentDAO.getInstrument(symbol);
-            Double result = _pricingService.calculatePrice(maturity, instrument.getSpot(), strike, instrument.getVolatility());
-            HttpResponse response = _httpexchange.getResponse();
-            response.setStatusCode(HttpStatus.SC_OK);
-            response.setEntity(new NStringEntity(result.toString(), ContentType.create("text/html", "UTF-8")));
-            _httpexchange.submitResponse();
+            executeRequest(_request, _httpexchange, _context);
             return null;
         }
     }

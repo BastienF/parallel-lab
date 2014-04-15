@@ -65,7 +65,7 @@
       sudo: false
       when: ${jetty_state.stdout} == "not_installed"
     - name: configure jetty
-      shell: cd jetty-distribution-9.1.3.v20140225/bin/ && sed '1d' jetty.sh > jetty.sh.tmp && mv jetty.sh.tmp jetty.sh && echo -e '#!/usr/bin/env bash\nJAVA_OPTIONS=$2' > jetty.sh.tmp && cat jetty.sh >> jetty.sh.tmp && mv jetty.sh.tmp jetty.sh && chmod 777 jetty.sh
+      shell: cd jetty-distribution-9.1.3.v20140225/bin/ && sed '1d' jetty.sh > jetty.sh.tmp && mv jetty.sh.tmp jetty.sh && echo -e '#!/usr/bin/env bash\nJAVA_OPTIONS=$2' > jetty.sh.tmp && cat jetty.sh >> jetty.sh.tmp && mv jetty.sh.tmp jetty.sh && chmod 777 jetty.sh && sed -i '/thread/s/^/#/g' ../start.ini
       sudo: false
       when: ${jetty_state.stdout} == "not_installed"
 - hosts: gatling

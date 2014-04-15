@@ -12,8 +12,9 @@ public class Server {
 	private static final int THREADS = 1;
 	public static final int PORT = 8080;
     public final static Logger logger = LoggerFactory.getLogger(Server.class);
+    public static final boolean POLLED = false;
 
-	public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception {
         try {
         final PricingService pricingService = getPricingService();
         final InstrumentDAO instrumentDAO = new InstrumentDAO();

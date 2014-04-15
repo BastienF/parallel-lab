@@ -32,10 +32,6 @@ public class MonoThreadedMonteCarlo implements PricingService {
 
 		maturity /= 360.0;
 
-        //logger.info("=================================================================================");
-        //logger.info("\t\t Start iteration Obj : " + this + " Thread : " + Thread.currentThread().getName());
-        //logger.info("=================================================================================");
-
 		for (long i = 0; i < numberOfIterations; i++) {
 			double gaussian = StdRandom.gaussian();
 			double priceComputed = computeMonteCarloIteration(spot,
@@ -44,10 +40,6 @@ public class MonoThreadedMonteCarlo implements PricingService {
 					priceComputed, strike);
 			bestPremiumsComputed += bestPremium;
 		}
-
-        //logger.info("=================================================================================");
-        //logger.info("\t\t Stop iteration Obj : " + this + " Thread : " + Thread.currentThread().getName());
-        //logger.info("=================================================================================");
 
 		// Compute mean
 		double meanOfPremiums = bestPremiumsComputed / numberOfIterations;

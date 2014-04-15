@@ -6,15 +6,23 @@ if [[ -z "$1" ]]; then
 fi
 
 vagrant up > vagrant.log
-launchDate=`date '+%d-%m-%Y.%T'`
+
 server=$2
 scenario=$1
+
+if [[ -z "$3" ]]; then
+  nbThreads=4
+else
+  nbThreads=$3
+fi
 
 if [ "$server" != "tomcat" ] && [ "$server" != "jetty" ] && [ "$server" != "httpcore" ]; then 
 	server="tomcat"
 fi
 
-echo "Server setted at" $server "<br/>"
+launchDate="$server-nbThreads$nbThreads-`date '+%d-%m-%Y.%T'`"
+
+echo "Server setted at" $server
 ansible-playbook -i hosts -l server deploy_webapp.yml --private-key=~/.vagrant.d/insecure_private_key --extra-vars 'server='$server
 if [ "$?" != "0" ]; then
 	echo "[ERROR] webapp deployement failed !"
@@ -23,7 +31,7 @@ fi
 launch () {
 	      date
         echo "Run with iterations=$3 implementation=$1 users=$2 launchDate=$launchDate duration=$4 server=$server scenario=$scenario"
-        ansible-playbook -i hosts -l server run_once.yml --private-key=~/.vagrant.d/insecure_private_key --extra-vars 'iterations='$3' implementation='$1' users='$2' launchDate='$launchDate' duration='$4' server='$server' scenario='$scenario
+        ansible-playbook -i hosts -l server run_once.yml --private-key=~/.vagrant.d/insecure_private_key --extra-vars 'iterations='$3' implementation='$1' users='$2' launchDate='$launchDate' duration='$4' server='$server' scenario='$scenario' nbThreads='$nbThreads
         if [ "$?" = "0" ]; then
         	ansible-playbook -i hosts -l gatling run_once.yml --private-key=~/.vagrant.d/insecure_private_key --extra-vars 'iterations='$3' implementation='$1' users='$2' launchDate='$launchDate' duration='$4' server='$server' scenario='$scenario
         else

@@ -23,7 +23,7 @@ public class ContextInitializer implements ApplicationContextInitializer<Configu
 	@Override
 	public void initialize(ConfigurableApplicationContext applicationContext) {
 		String implementation = System.getProperty("implementation");
-		logger.info("\n-----------------------------------------------------------------");
+        logger.info("\n-----------------------------------------------------------------");
 		logger.info("\n\t\tAlgorithm implementation is :\"" + implementation + "\"");
 		logger.info("\n-----------------------------------------------------------------");
 		applicationContext.getEnvironment().setActiveProfiles(implementation);
