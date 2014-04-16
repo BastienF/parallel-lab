@@ -12,7 +12,6 @@ org.eclipse.wst.common.component
 org.eclipse.wst.common.project.facet.core.xml
 **/.settings
 *.DS_Store
-*.zip
 AutoEnvOracle7/results
 AutoEnvOracle7/share
 *~
@@ -22,3 +21,5 @@ vagrant.log
 Fast1
 AutoEnvOracle7/launch_multi_scenarios.sh
 scenarios
+
+AutoEnvOracle7/tmp/

@@ -11,7 +11,7 @@ server=$2
 scenario=$1
 
 if [[ -z "$3" ]]; then
-  nbThreads=4
+  nbThreads=6
 else
   nbThreads=$3
 fi
@@ -40,6 +40,7 @@ launch () {
 }
 
 launch_all() {
+        launch mock $1 $2 $3;
         launch akka $1 $2 $3;
         launch naive $1 $2 $3;
        	launch mono $1 $2 $3;
