@@ -20,6 +20,6 @@ vagrant.log
 *.log
 Fast1
 AutoEnvOracle7/launch_multi_scenarios.sh
-scenarios
+scenarios/*
 
 AutoEnvOracle7/tmp/
