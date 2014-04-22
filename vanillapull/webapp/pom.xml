@@ -13,11 +13,16 @@
 	<name>Vanilla Pull</name>
 
 	<properties>
-		<org.springframework-version>3.2.2.RELEASE</org.springframework-version>
+		<org.springframework-version>4.0.3.RELEASE</org.springframework-version>
 		<org.slf4j-version>1.7.5</org.slf4j-version>
 	</properties>
 
 	<dependencies>
+        <dependency>
+            <groupId>org.javassist</groupId>
+            <artifactId>javassist</artifactId>
+            <version>3.17.1-GA</version>
+        </dependency>
         <!-- Monitoring -->
         <dependency>
             <groupId>com.codahale.metrics</groupId>

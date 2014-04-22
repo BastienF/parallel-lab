@@ -1,5 +1,7 @@
 package com.octo.vanillapull.web;
 
+import com.octo.vanillapull.model.Instrument;
+
 public class InstrumentDisplay {
 
 	private String symbol;
@@ -7,6 +9,14 @@ public class InstrumentDisplay {
 	private double spot;
 	private double volatility;
 	private double variation;
+
+    public InstrumentDisplay(Instrument instrument) {
+        setSymbol(instrument.getSymbol());
+        setLabel(instrument.getLabel());
+        setSpot(instrument.getSpot());
+        setVolatility(instrument.getVolatility());
+        setVariation(instrument.getVariation());
+    }
 
 	public String getSymbol() {
 		return symbol;
@@ -47,5 +57,4 @@ public class InstrumentDisplay {
 	public void setVariation(double variation) {
 		this.variation = variation;
 	}
-
 }

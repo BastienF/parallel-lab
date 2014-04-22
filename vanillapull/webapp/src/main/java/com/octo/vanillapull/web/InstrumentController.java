@@ -9,7 +9,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Henri Tremblay
@@ -28,17 +31,6 @@ public class InstrumentController {
 		List<Instrument> insList = instrumentDao.findAllOrderedBySymbol();
 
 		// Retrieve instrument after instrument
-		List<InstrumentDisplay> returnList = new ArrayList<>(insList.size());
-		for (Instrument ins : insList) {
-			InstrumentDisplay insDisplay = new InstrumentDisplay();
-			insDisplay.setSymbol(ins.getSymbol());
-			insDisplay.setLabel(ins.getLabel());
-			insDisplay.setSpot(ins.getSpot());
-			insDisplay.setVolatility(ins.getVolatility());
-			insDisplay.setVariation(ins.getVariation());
-			returnList.add(insDisplay);
-		}
-
-		return returnList;
+		return insList.parallelStream().map(ins -> new InstrumentDisplay(ins)).collect(Collectors.toList());
 	}
 }

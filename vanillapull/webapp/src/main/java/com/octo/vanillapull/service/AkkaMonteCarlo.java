@@ -53,11 +53,7 @@ public class AkkaMonteCarlo implements PricingService {
 		system = ActorSystem.create("MonteCarloSystem");
 
 		// create the master
-		master = system.actorOf(new Props(new UntypedActorFactory() {
-			public UntypedActor create() {
-				return new Master(interestRate);
-			}
-		}));
+		master = system.actorOf(new Props(() -> new Master(interestRate)));
 	}
 
 	@PreDestroy
@@ -74,16 +70,14 @@ public class AkkaMonteCarlo implements PricingService {
 				volatility);
 
 		// Creating agregator - use to aggregate result from master
-		ActorRef agregator = system.actorOf(new Props(new UntypedActorFactory() {
-			@Override
-			public UntypedActor create() throws Exception {
-				ResultListener agregator = new ResultListener();
-				agregator.maturity = maturity;
-				agregator.master = master;
-				agregator.interestRate = interestRate;
-				return agregator;
+		ActorRef agregator = system.actorOf(new Props(() -> {
+				ResultListener agregator2 = new ResultListener();
+				agregator2.maturity = maturity;
+				agregator2.master = master;
+				agregator2.interestRate = interestRate;
+				return agregator2;
 			}
-		}));
+        ));
 
 		Timeout timeout = new Timeout(Duration.create(60, "seconds"));
 		Future<Object> future = ask(agregator, work, timeout);

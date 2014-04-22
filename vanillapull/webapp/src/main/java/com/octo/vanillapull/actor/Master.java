@@ -13,11 +13,7 @@ public class Master extends UntypedActor {
 
 	public Master(final double interestRate) {
 		workerRouter = this.getContext().actorOf(
-				new Props(new UntypedActorFactory() {
-					public UntypedActor create() {
-						return new Worker(interestRate);
-					}
-				}).withRouter(new RoundRobinRouter(
+				new Props(() -> new Worker(interestRate)).withRouter(new RoundRobinRouter(
 						AkkaMonteCarlo.processors)), "workerRouter");
 	}
 
