@@ -39,10 +39,28 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.memory = 2048
       config.vm.network "forwarded_port", guest: 22, host: 23457
       config.vm.network "forwarded_port", guest: 80, host: 8087
-      config.vm.network "forwarded_port", guest: 8080, host: 8088
-      for i in 10001..10010
-        config.vm.network :forwarded_port, guest: i, host: i
-      end
+      config.vm.network "forwarded_port", guest: 8080, host: 8086
+      #for i in 10001..10010
+       # config.vm.network :forwarded_port, guest: i, host: i
+      #end
+    end
+    config.vm.synced_folder ".", "/vagrant/", id: "core", :nfs => true,  :mount_options   => ['nolock,vers=3,udp']
+    config.vm.synced_folder "../vanillapull/", "/home/vagrant/parallel-lab/vanillapull/", id: "core", :nfs => true,  :mount_options   => ['nolock,vers=3,udp']
+    #config.vm.provision :shell, :privileged => false, :path => "server.sh"
+  end
+
+  config.vm.define :servero8 do |config|
+    config.vm.host_name = "servero8"
+    config.vm.network "private_network", ip: @lr_ip_server
+    config.vm.provider :virtualbox do |vb|
+      vb.customize ["modifyvm", :id, "--cpus", 4]
+      vb.memory = 2048
+      config.vm.network "forwarded_port", guest: 22, host: 23458
+      config.vm.network "forwarded_port", guest: 80, host: 8088
+      config.vm.network "forwarded_port", guest: 8080, host: 8089
+      #for i in 10001..10010
+       # config.vm.network :forwarded_port, guest: i, host: i
+      #end
     end
     config.vm.synced_folder ".", "/vagrant/", id: "core", :nfs => true,  :mount_options   => ['nolock,vers=3,udp']
     config.vm.synced_folder "../vanillapull/", "/home/vagrant/parallel-lab/vanillapull/", id: "core", :nfs => true,  :mount_options   => ['nolock,vers=3,udp']

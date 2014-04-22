@@ -21,14 +21,22 @@
         - maven
         - collectd
         - git
-    - name: add java 7 repo
+    - name: add java oracle repo
       apt_repository: repo='ppa:webupd8team/java' state=present
     - name: Accept Oracle License
       shell: echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
     - name: installing java 7
       apt: pkg=oracle-java7-installer state=latest update-cache=yes force=yes
+      when: inventory_hostname == "servero7"
     - name: set java 7 as default
       apt: pkg=oracle-java7-set-default
+      when: inventory_hostname == "servero7"
+    - name: installing java 8
+      apt: pkg=oracle-java8-installer state=latest update-cache=yes force=yes
+      when: inventory_hostname == "servero8"
+    - name: set java 8 as default
+      apt: pkg=oracle-java8-set-default
+      when: inventory_hostname == "servero8"
     - name: configure collectd
       command: cp {{ provisioning_path }}/collectd.conf /etc/collectd/collectd.conf
       sudo: true
@@ -65,7 +73,7 @@
       sudo: false
       when: ${jetty_state.stdout} == "not_installed"
     - name: configure jetty
-      shell: cd jetty-distribution-9.1.3.v20140225/bin/ && sed '1d' jetty.sh > jetty.sh.tmp && mv jetty.sh.tmp jetty.sh && echo -e '#!/usr/bin/env bash\nJAVA_OPTIONS=$2' > jetty.sh.tmp && cat jetty.sh >> jetty.sh.tmp && mv jetty.sh.tmp jetty.sh && chmod 777 jetty.sh && sed -i '/thread/s/^/#/g' ../start.ini
+      shell: cd jetty-distribution-9.1.3.v20140225/bin/ && sed '1d' jetty.sh > jetty.sh.tmp && mv jetty.sh.tmp jetty.sh && echo '#!/usr/bin/env bash\nJAVA_OPTIONS=$2' > jetty.sh.tmp && cat jetty.sh >> jetty.sh.tmp && mv jetty.sh.tmp jetty.sh && chmod 777 jetty.sh && sed -i '/thread/s/^/#/g' ../start.ini
       sudo: false
       when: ${jetty_state.stdout} == "not_installed"
 - hosts: gatling
