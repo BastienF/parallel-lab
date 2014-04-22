@@ -27,19 +27,5 @@ public class ContextInitializer implements ApplicationContextInitializer<Configu
 		logger.info("\n\t\tAlgorithm implementation is :\"" + implementation + "\"");
 		logger.info("\n-----------------------------------------------------------------");
 		applicationContext.getEnvironment().setActiveProfiles(implementation);
-
-        if (MetersManager.getMetrics() == null)
-            logger.error("=================== Metrics NULL ====================");
-        else {
-           /* final CsvReporter reporter = CsvReporter.forRegistry(MetersManager.getMetrics())
-                    .formatFor(Locale.FRANCE)
-                    .convertRatesTo(TimeUnit.SECONDS)
-                    .convertDurationsTo(TimeUnit.MILLISECONDS)
-                    .build(new File("gatling/target/gatling/results/"));
-            reporter.start(1, TimeUnit.SECONDS);*/
-        }
-	}
-
-	
-
+    }
 }

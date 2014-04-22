@@ -25,7 +25,7 @@ public class ThreadCountJsonWriter extends AbstractOutputWriter implements Outpu
 
     public ThreadCountJsonWriter() {
         try {
-            file = new BufferedWriter(new FileWriter("/vagrant/tmp/threadCount.json"));
+            file = new BufferedWriter(new FileWriter(System.getProperty("writerPath")));
         } catch (IOException e) {
             logger.error("Can't open thread count log file : " + e.getMessage());
         }
