@@ -12,7 +12,6 @@
         {
                 "@class" : "com.octo.vanillapull.monitoring.writers.ThreadCountJsonWriter",
                 "settings" : {
-                  "outputFile" : "/home/vagrant/outputwritertotrash.log",
                   "maxLogFileSize" : "10MB",
                   "maxLogBackupFiles" : 200,
                   "debug" : true,

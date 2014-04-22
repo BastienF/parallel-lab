@@ -5,6 +5,7 @@
     tomcat_path: "/home/vagrant/apache-tomcat-7.0.52/"
     jetty_path: "/home/vagrant/jetty-distribution-9.1.3.v20140225/"
     vanillapull_dest_path: "/home/vagrant/parallel-lab/vanillapull/"
+    webappWriterPath: "-DwriterPath=/vagrant/tmp/threadCount.json"
   sudo: yes
   user: vagrant
   tasks:
@@ -34,15 +35,15 @@
       notify: startup httpcore
 
     - name: startup tomcat
-      shell: JAVA_OPTS="-Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }}" nohup {{ tomcat_path }}/bin/startup.sh &
+      shell: JAVA_OPTS="-Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} {{ webappWriterPath }}" nohup {{ tomcat_path }}/bin/startup.sh &
       sudo: true
 
     - name: startup jetty
-      command: bash {{ jetty_path }}/bin/jetty.sh start "-Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -Dthreads.min={{ nbThreads }} -Dthreads.max={{ nbThreads }}"
+      command: bash {{ jetty_path }}/bin/jetty.sh start "-Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -Dthreads.min={{ nbThreads }} -Dthreads.max={{ nbThreads }} {{ webappWriterPath }}"
       sudo: true
 
     - name: startup httpcore
-      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} 1>std.log 2>err.log
+      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} {{ webappWriterPath }} 1>std.log 2>err.log
       async: 1000000000000000000
       poll: 0
 
