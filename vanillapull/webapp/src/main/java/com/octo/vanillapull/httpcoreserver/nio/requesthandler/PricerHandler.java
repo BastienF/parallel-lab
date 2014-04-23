@@ -4,7 +4,7 @@ import com.octo.vanillapull.httpcoreserver.nio.AsyncServer;
 import com.octo.vanillapull.httpcoreserver.nio.Server;
 import com.octo.vanillapull.httpcoreserver.nio.dao.InstrumentDAO;
 import com.octo.vanillapull.model.Instrument;
-import com.octo.vanillapull.service.PricingService;
+import com.octo.vanillapull.service.scala.PricingService;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;

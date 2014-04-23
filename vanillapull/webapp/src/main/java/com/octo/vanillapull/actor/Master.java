@@ -6,10 +6,10 @@ import akka.actor.UntypedActor;
 import akka.actor.UntypedActorFactory;
 import akka.routing.RoundRobinRouter;
 
-import com.octo.vanillapull.service.AkkaMonteCarlo;
-
 public class Master extends UntypedActor {
 	private final ActorRef workerRouter;
+
+    public int processors = Runtime.getRuntime().availableProcessors();
 
 	public Master(final double interestRate) {
 		workerRouter = this.getContext().actorOf(
@@ -18,7 +18,7 @@ public class Master extends UntypedActor {
 						return new Worker(interestRate);
 					}
 				}).withRouter(new RoundRobinRouter(
-						AkkaMonteCarlo.processors)), "workerRouter");
+						processors)), "workerRouter");
 	}
 
 	
@@ -27,7 +27,7 @@ public class Master extends UntypedActor {
 		if (message instanceof Work) {
 			Work work = (Work) message;
 
-			for (int i = 0; i < AkkaMonteCarlo.processors; i++) {
+			for (int i = 0; i < processors; i++) {
 				workerRouter.tell(work, getSender());
 			}
 			return;

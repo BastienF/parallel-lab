@@ -1,12 +1,9 @@
 package com.octo.vanillapull.actor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-
-import com.octo.vanillapull.service.AkkaMonteCarlo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ResultListener extends UntypedActor {
 
@@ -17,6 +14,7 @@ public class ResultListener extends UntypedActor {
 	private double bestPremiumsComputed = 0;
 	private int answerReceived = 0;
 	public double maturity = 0;
+    public int processors = Runtime.getRuntime().availableProcessors();
 
 	public ActorRef parent;
 	public ActorRef master;
@@ -29,10 +27,10 @@ public class ResultListener extends UntypedActor {
 			Double result = resultContainer.result;
 			bestPremiumsComputed += result;
 
-			if (++answerReceived == AkkaMonteCarlo.processors) {
+			if (++answerReceived == processors) {
 				// Compute mean
 				double meanOfPremiums = bestPremiumsComputed
-						/ (nbPerThreads * AkkaMonteCarlo.processors); // not
+						/ (nbPerThreads * processors); // not
 																		// using
 				// numberOfIterations because the rounding might might have
 				// truncate some iterations
@@ -56,7 +54,7 @@ public class ResultListener extends UntypedActor {
 			
 			Work work = (Work) message;
 
-			nbPerThreads = work.nbIterations / AkkaMonteCarlo.processors;
+			nbPerThreads = work.nbIterations / processors;
 			maturity = work.maturity / 360.0;
 
 			// Modify the message to give the right to the workers
