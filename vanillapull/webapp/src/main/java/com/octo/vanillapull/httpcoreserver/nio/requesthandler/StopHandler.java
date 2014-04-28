@@ -35,7 +35,6 @@ public class StopHandler implements HttpAsyncRequestHandler<HttpRequest> {
 
     @Override
     public void handle(final HttpRequest request, final HttpAsyncExchange httpexchange, final HttpContext context) {
-        System.out.println("STOP");
         HttpResponse response = httpexchange.getResponse();
         response.setStatusCode(HttpStatus.SC_OK);
         response.setEntity(new NStringEntity("STOP", ContentType.create("text/html", "UTF-8")));

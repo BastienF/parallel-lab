@@ -5,8 +5,9 @@ if [[ -z "$1" ]]; then
 	exit 1
 fi
 
-JAVA_VERSION=8
+JAVA_VERSION=7
 VM_SERVER=servero$JAVA_VERSION
+LANGUAGE=JAVA7
 
 vagrant up gatlingo7 > vagrant.log
 vagrant up $VM_SERVER >> vagrant.log
@@ -24,7 +25,7 @@ if [ "$server" != "tomcat" ] && [ "$server" != "jetty" ] && [ "$server" != "http
 	server="tomcat"
 fi
 
-launchDate="java$JAVA_VERSION-$server-nbThreads$nbThreads-`date '+%d-%m-%Y.%T'`"
+launchDate="$LANGUAGE-$server-nbThreads$nbThreads-`date '+%d-%m-%Y.%T'`"
 
 echo "Server setted at" $server
 ansible-playbook -i hosts -l $VM_SERVER deploy_webapp.yml --private-key=~/.vagrant.d/insecure_private_key --extra-vars 'server='$server
