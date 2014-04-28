@@ -5,9 +5,9 @@ if [[ -z "$1" ]]; then
 	exit 1
 fi
 
-JAVA_VERSION=7
+JAVA_VERSION=8
 VM_SERVER=servero$JAVA_VERSION
-LANGUAGE=JAVA7
+LANGUAGE=JAVA8
 
 vagrant up gatlingo7 > vagrant.log
 vagrant up $VM_SERVER >> vagrant.log
@@ -47,10 +47,10 @@ launch () {
 launch_all() {
         #launch mock $1 $2 $3;
         launch akka $1 $2 $3;
-        #launch naive $1 $2 $3;
-       	#launch mono $1 $2 $3;
-       	#launch executor $1 $2 $3;
-       	#launch pool $1 $2 $3;
+        launch naive $1 $2 $3;
+       	launch mono $1 $2 $3;
+       	launch executor $1 $2 $3;
+       	launch pool $1 $2 $3;
 }
 first=false
 while IFS=';' read users iter dur
