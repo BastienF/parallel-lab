@@ -7,7 +7,7 @@ fi
 
 JAVA_VERSION=7
 VM_SERVER=servero$JAVA_VERSION
-LANGUAGE=JAVA7
+LANGUAGE=DUMMY_JAVA7
 
 vagrant up gatlingo7 > vagrant.log
 vagrant up $VM_SERVER >> vagrant.log

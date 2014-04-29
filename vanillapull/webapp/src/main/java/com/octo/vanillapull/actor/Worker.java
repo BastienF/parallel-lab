@@ -2,8 +2,6 @@ package com.octo.vanillapull.actor;
 
 import akka.actor.UntypedActor;
 
-import com.octo.vanillapull.util.StdRandom;
-
 public class Worker extends UntypedActor {
 
 	private double interestRate;
@@ -19,18 +17,8 @@ public class Worker extends UntypedActor {
 		}
 
 		Work work = (Work) message;
-		double bestPremiumsComputed = 0;
 
-		for (long i = 0; i < work.nbIterations; i++) {
-			double gaussian = StdRandom.gaussian();
-			double priceComputed = computeMonteCarloIteration(work.spot,
-					interestRate, work.volatility, gaussian, work.maturity);
-			double bestPremium = computePremiumForMonteCarloIteration(
-					priceComputed, work.strike);
-			bestPremiumsComputed += bestPremium;
-		}
-		
-		Result r = new Result(bestPremiumsComputed);
+		Result r = new Result(Math.random());
 		getSender().tell(r, getSelf());
 	}
 	

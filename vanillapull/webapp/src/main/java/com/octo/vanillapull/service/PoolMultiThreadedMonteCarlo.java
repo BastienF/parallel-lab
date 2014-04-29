@@ -1,6 +1,5 @@
 package com.octo.vanillapull.service;
 
-import com.octo.vanillapull.util.StdRandom;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -35,14 +34,7 @@ public class PoolMultiThreadedMonteCarlo implements PricingService {
 
 		@Override
 		public boolean exec() {
-			for (long i = 0; i < nbIterations; i++) {
-				double gaussian = StdRandom.gaussian();
-				double priceComputed = computeMonteCarloIteration(spot,
-						interestRate, volatility, gaussian, maturity);
-				double bestPremium = computePremiumForMonteCarloIteration(
-						priceComputed, strike);
-				bestPremiumsComputed += bestPremium;
-			}
+			bestPremiumsComputed = Math.random();
 			return true;
 		}
 
@@ -103,18 +95,7 @@ public class PoolMultiThreadedMonteCarlo implements PricingService {
 			}
 		}
 
-		// Compute mean
-		double meanOfPremiums = bestPremiumsComputed
-				/ (nbPerThreads * processors); // not using numberOfIterations
-												// because the rounding might
-												// might have truncate some
-												// iterations
-
-		// Discount the expected payoff at risk free interest rate
-		double pricedValue = Math.exp(-interestRate * maturity)
-				* meanOfPremiums;
-
-		return pricedValue;
+		return Math.random();
 	}
 
 	public double computeMonteCarloIteration(double spot, double rate,
