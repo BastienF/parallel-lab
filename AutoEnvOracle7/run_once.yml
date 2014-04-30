@@ -35,15 +35,15 @@
       notify: startup httpcore
 
     - name: startup tomcat
-      shell: JAVA_OPTS="-Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} {{ webappWriterPath }}" nohup {{ tomcat_path }}/bin/startup.sh &
+      shell: JAVA_OPTS="-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:/vagrant/tmp/datalog-{{ launchDate }}.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} {{ webappWriterPath }}" nohup {{ tomcat_path }}/bin/startup.sh &
       sudo: true
 
     - name: startup jetty
-      command: bash {{ jetty_path }}/bin/jetty.sh start "-Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -Dthreads.min={{ nbThreads }} -Dthreads.max={{ nbThreads }} {{ webappWriterPath }}"
+      command: bash {{ jetty_path }}/bin/jetty.sh start "-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:/vagrant/tmp/datalog-{{ launchDate }}.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -Dthreads.min={{ nbThreads }} -Dthreads.max={{ nbThreads }} {{ webappWriterPath }}"
       sudo: true
 
     - name: startup httpcore
-      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} {{ webappWriterPath }} 1>std.log 2>err.log
+      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java -XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:/vagrant/tmp/datalog-{{ launchDate }}.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} {{ webappWriterPath }} 1>std.log 2>err.log
       async: 1000000000000000000
       poll: 0
 
@@ -69,9 +69,13 @@
       shell: cat /vagrant/tmp/threadCount.json >> /home/vagrant/datalog-{{ launchDate }}.json
       sudo: true
       ignore_errors: yes
+    - name: agregate reports 2
+      shell: mv /vagrant/tmp/datalog-{{ launchDate }}.gclog {{ results_dest_path }}/datalog-{{ launchDate }}.gclog
+      sudo: true
+      ignore_errors: yes
     - name: clean reports 2
       shell: cp /home/vagrant/datalog-{{ launchDate }}.json {{ results_dest_path }}/datalog-{{ launchDate }}.json
-    - name: clean reports 3
+    - name: clean reports 2.1
       shell: cp /home/vagrant/datalog-{{ launchDate }}.csv {{ results_dest_path }}/datalog-{{ launchDate }}.csv
     - name: clean reports 4
       command: cp -R {{ results_src_path }} {{ results_dest_path_launch }}/{{ implementation }}_{{ users }}users_{{ iterations }}iter_results/
