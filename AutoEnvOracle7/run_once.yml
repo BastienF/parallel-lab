@@ -13,6 +13,8 @@
       command: rm /vagrant/tmp/threadCount.json
       ignore_errors: true
       sudo: true
+    - name: prepare log gc
+      command: mkdir -p /vagrant/tmp/log_gc_{{ launchDate }}
     - name: shutdown tomcat
       command: bash {{ tomcat_path }}/bin/shutdown.sh
       sudo: true
@@ -35,7 +37,7 @@
       notify: startup httpcore
 
     - name: startup tomcat
-      shell: JAVA_OPTS="-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:/vagrant/tmp/datalog-{{ launchDate }}.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} {{ webappWriterPath }}" nohup {{ tomcat_path }}/bin/startup.sh &
+      shell: JAVA_OPTS="-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:/vagrant/tmp/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} {{ webappWriterPath }}" nohup {{ tomcat_path }}/bin/startup.sh &
       sudo: true
 
     - name: startup jetty
@@ -69,8 +71,11 @@
       shell: cat /vagrant/tmp/threadCount.json >> /home/vagrant/datalog-{{ launchDate }}.json
       sudo: true
       ignore_errors: yes
-    - name: agregate reports 2
-      shell: mv /vagrant/tmp/datalog-{{ launchDate }}.gclog {{ results_dest_path }}/datalog-{{ launchDate }}.gclog
+    - name: agregate reports 2.1
+      shell: mkdir -p {{ results_dest_path }}/log_gc_{{ launchDate }}
+      sudo: true
+    - name: agregate reports 2.2
+      shell: mv /vagrant/tmp/log_gc_{{ launchDate }}/* {{ results_dest_path }}/log_gc_{{ launchDate }}/
       sudo: true
       ignore_errors: yes
     - name: clean reports 2
