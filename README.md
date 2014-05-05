@@ -23,7 +23,7 @@ Executes on the gatling machine to connect directly without password :
 `ssh-copy-id user@gatling_machine`
 
 ### Running industrial testing ###
-# Prerequisites #
+#### Prerequisites ####
 shell
 vagrant
 ansible
