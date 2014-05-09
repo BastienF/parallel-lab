@@ -41,11 +41,11 @@
       sudo: true
 
     - name: startup jetty
-      command: bash {{ jetty_path }}/bin/jetty.sh start "-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:/vagrant/tmp/datalog-{{ launchDate }}.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -Dthreads.min={{ nbThreads }} -Dthreads.max={{ nbThreads }} {{ webappWriterPath }}"
+      command: bash {{ jetty_path }}/bin/jetty.sh start "-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:/vagrant/tmp/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -Dthreads.min={{ nbThreads }} -Dthreads.max={{ nbThreads }} {{ webappWriterPath }}"
       sudo: true
 
     - name: startup httpcore
-      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java -XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:/vagrant/tmp/datalog-{{ launchDate }}.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} {{ webappWriterPath }} 1>std.log 2>err.log
+      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java -XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:/vagrant/tmp/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} {{ webappWriterPath }} 1>std.log 2>err.log
       async: 1000000000000000000
       poll: 0
 
