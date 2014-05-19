@@ -23,6 +23,12 @@ Executes on the gatling machine to connect directly without password :
 `ssh-copy-id user@gatling_machine`
 
 ### Running industrial testing ###
+#### Prerequisites ####
+shell
+vagrant
+ansible
+jq
+
 
 Test scenarios can be run automagically.
 On the first environnement initialization the script init.sh has to be run. This script will be set up and provisionning the test VM.
