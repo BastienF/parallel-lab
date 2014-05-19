@@ -1,26 +1,49 @@
 ---
 - hosts: server
   vars:
-    vagrant_path : /vagrant
-    provisioning_path: "{{ vagrant_path }}/provisioning"
     graphite_state: "not_installed"
     tomcat_state: "not_installed"
     jetty_state: "not_installed"
+    distant_home: "/home/{{ distant_user }}"
+    provisioning_path: "{{ distant_home }}/provisioning"
   sudo: yes
-  user: vagrant
+  user: ${distant_user}
   tasks:
-    - name: creating required paths
-      command: mkdir -p /home/vagrant/parallel-lab/vanillapull/gatling
-      command: mkdir -p /home/vagrant/parallel-lab/vanillapull/webapp
+    - name: Clean local project
+      local_action: shell cd ../vanillapull/; mvn clean cd gatling-json/gatling; mvn clean; cd ../gatling-highcharts; mvn clean; 
+      sudo: false
+      when: ${aws}
+    - name: archive local project
+      local_action: command tar -vzcf tmp/vanillapull.tar.gz ../vanillapull
+      sudo: false
+      when: ${aws}
+    - name: archive provisioning
+      local_action: command tar -vzcf tmp/provisioning.tar.gz ./provisioning
+      sudo: false
+    - name: creating required path
+      command: mkdir -p "{{ distant_home }}/parallel-lab/vanillapull/"
+    - name: creating required path 2
+      command: mkdir -p {{ distant_home }}/toBringBack/
+    - name: creating required path 3
+      command: mkdir -p {{ distant_home }}/provisioning/
+    - name: transfer and untar projects
+      unarchive: src=tmp/vanillapull.tar.gz dest={{ distant_home }}/parallel-lab/
+      when: ${aws}
+    - name: transfer and untar provisioning
+      unarchive: src=tmp/provisioning.tar.gz dest={{ distant_home }}/
     - name: update packages
       apt: update_cache=yes
     - name: ensure packages required are installed
       apt: pkg={{ item }} state=latest
       with_items:
-        - python-apt
         - maven
+    - name: ensure optional packages required are installed
+      apt: pkg={{ item }} state=latest
+      with_items:
+        - python-apt
         - collectd
         - git
+      when: ${full}
     - name: add java oracle repo
       apt_repository: repo='ppa:webupd8team/java' state=present
     - name: Accept Oracle License
@@ -40,32 +63,33 @@
     - name: configure collectd
       command: cp {{ provisioning_path }}/collectd.conf /etc/collectd/collectd.conf
       sudo: true
+      when: ${full}
     - name: testif graphite is already installed
-      action: shell test -d /home/vagrant/setup-graphite/ && echo "\"installed\"" || echo "\"not_installed\""
+      action: shell test -d {{ distant_home }}/setup-graphite/ && echo "\"installed\"" || echo "\"not_installed\""
       register: graphite_state
     - name: get graphite
       command: git clone https://github.com/gdbtek/setup-graphite.git
-      when: ${graphite_state.stdout} == "not_installed"
+      when: ${full} and ${graphite_state.stdout} == "not_installed"
     - name: configure graphite
-      command: bash /home/vagrant/setup-graphite/ubuntu.bash --login 'root' --password 'root' --email 'bfi@octo.com'
-      when: ${graphite_state.stdout} == "not_installed"
+      command: bash {{ distant_home }}/setup-graphite/{{ distant_user }}.bash --login 'root' --password 'root' --email 'bfi@octo.com'
+      when: ${full} and ${graphite_state.stdout} == "not_installed"
       sudo: true
     - name: testif tomcat is already installed
-      action: shell test -d /home/vagrant/apache-tomcat-7.0.52/ && echo "\"installed\"" || echo "\"not_installed\""
+      action: shell test -d {{ distant_home }}/apache-tomcat-7.0.52/ && echo "\"installed\"" || echo "\"not_installed\""
       register: tomcat_state
     - name: download tomcat
-      get_url: url=http://archive.apache.org/dist/tomcat/tomcat-7/v7.0.52/bin/apache-tomcat-7.0.52.tar.gz dest=/home/vagrant/
+      get_url: url=http://archive.apache.org/dist/tomcat/tomcat-7/v7.0.52/bin/apache-tomcat-7.0.52.tar.gz dest={{ distant_home }}/
       when: ${tomcat_state.stdout} == "not_installed"
     - name: untar tomcat
       command: tar xvfz apache-tomcat-7.0.52.tar.gz
       when: ${tomcat_state.stdout} == "not_installed"
     - name: configure tomcat
-      command: cp {{ provisioning_path }}/tomcat-users.xml /home/vagrant/apache-tomcat-7.0.52/conf/
+      command: cp {{ provisioning_path }}/tomcat-users.xml {{ distant_home }}/apache-tomcat-7.0.52/conf/
     - name: testif jetty is already installed
-      action: shell test -d /home/vagrant/jetty-distribution-9.1.3.v20140225/ && echo "\"installed\"" || echo "\"not_installed\""
+      action: shell test -d {{ distant_home }}/jetty-distribution-9.1.3.v20140225/ && echo "\"installed\"" || echo "\"not_installed\""
       register: jetty_state
     - name: download jetty
-      get_url: url=http://download.eclipse.org/jetty/9.1.3.v20140225/dist/jetty-distribution-9.1.3.v20140225.tar.gz dest=/home/vagrant/
+      get_url: url=http://download.eclipse.org/jetty/9.1.3.v20140225/dist/jetty-distribution-9.1.3.v20140225.tar.gz dest={{ distant_home }}/
       sudo: false
       when: ${jetty_state.stdout} == "not_installed"
     - name: untar jetty
@@ -78,16 +102,32 @@
       when: ${jetty_state.stdout} == "not_installed"
 - hosts: gatling
   vars:
-    vagrant_path : /vagrant
-    provisioning_path: "{{ vagrant_path }}/provisioning"
     vanillapull_src_path: "../vanillapull/"
-    vanillapull_dest_path: "/home/vagrant/parallel-lab/vanillapull/"
+    vanillapull_dest_path: "{{ distant_home }}/parallel-lab/vanillapull/"
+    distant_home: "/home/{{ distant_user }}"
+    provisioning_path: "{{ distant_home }}/provisioning"
   sudo: yes
-  user: vagrant
+  user: ${distant_user}
   tasks:
-    - name: creating required paths
-      command: mkdir -p /home/vagrant/parallel-lab/vanillapull/gatling
-      command: mkdir -p /home/vagrant/parallel-lab/vanillapull/webapp
+    - name: Clean local project
+      local_action: shell cd ../vanillapull/; mvn clean cd gatling-json/gatling; mvn clean; cd ../gatling-highcharts; mvn clean; 
+      sudo: false
+    - name: archive local project
+      local_action: command tar -vzcf tmp/vanillapull.tar.gz ../vanillapull
+      sudo: false
+    - name: archive provisioning
+      local_action: command tar -vzcf tmp/provisioning.tar.gz ./provisioning
+      sudo: false
+    - name: creating required path
+      command: mkdir -p "{{ distant_home }}/parallel-lab/vanillapull/"
+    - name: creating required path 2
+      command: mkdir -p {{ distant_home }}/toBringBack/
+    - name: creating required path 3
+      command: mkdir -p {{ distant_home }}/provisioning/
+    - name: transfer and untar projects
+      unarchive: src=tmp/vanillapull.tar.gz dest={{ distant_home }}/parallel-lab/
+    - name: transfer and untar provisioning
+      unarchive: src=tmp/provisioning.tar.gz dest={{ distant_home }}/
     - name: update packages
       apt: update_cache=yes
     - name: ensure packages required are installed
@@ -96,7 +136,7 @@
         - openjdk-7-jdk
         - maven
     - name: compile gatling-json/gatling
-      shell: cd /home/vagrant/parallel-lab/vanillapull/gatling-json/gatling/; mvn install
+      shell: cd {{ distant_home }}/parallel-lab/vanillapull/gatling-json/gatling/; mvn install
     - name: compile gatling-json/gatling-highcharts
-      shell: cd /home/vagrant/parallel-lab/vanillapull/gatling-json/gatling-highcharts/; mvn install
+      shell: cd {{ distant_home }}/parallel-lab/vanillapull/gatling-json/gatling-highcharts/; mvn install
 

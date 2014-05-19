@@ -1,15 +1,15 @@
 ---
 - hosts: server
   vars:
-    vagrant_path: /vagrant
-    provisioning_path: "{{ vagrant_path }}/provisioning"
-    vanillapull_dest_path: "/home/vagrant/parallel-lab/vanillapull/"
+    distant_home: "/home/{{ distant_user }}"
+    to_bring_back: "{{ distant_home }}/toBringBack"
+    vanillapull_dest_path: "{{ distant_home }}/parallel-lab/vanillapull/"
     war_name: "vanillapull-1.0-SNAPSHOT.war"
-    tomcat_path: "/home/vagrant/apache-tomcat-7.0.52/"
-    jetty_path: "/home/vagrant/jetty-distribution-9.1.3.v20140225/"
-    webappWriterPath: "-DwriterPath=/vagrant/tmp/threadCount.json"
+    tomcat_path: "{{ distant_home }}/apache-tomcat-7.0.52/"
+    jetty_path: "{{ distant_home }}/jetty-distribution-9.1.3.v20140225/"
+    webappWriterPath: "-DwriterPath={{ to_bring_back }}/threadCount.json"
   sudo: yes
-  user: vagrant
+  user: ${distant_user}
   tasks:
     - name: clean webapp
       shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp clean package -Dimplementation=mono -Diterations=500000 -Dusers=1 {{ webappWriterPath }}
@@ -20,7 +20,7 @@
       command: bash {{ jetty_path }}/bin/jetty.sh stop
       sudo: true
     - name: shutdown httpcore
-      command: wget http://localhost:8080/vanillapull-1.0-SNAPSHOT/stop
+      command: wget http://localhost:8080/vanillapull-1.0-SNAPSHOT/stopper/stop/
       ignore_errors: yes
     - name: deploy
       command: ls
@@ -39,9 +39,6 @@
     - name: cp init tomcat script
       command: mkdir -p {{ tomcat_path }}/conf/logs/
       sudo: true
-      notify: configure tomcat
-    - name: configure tomcat
-      command: cp {{ provisioning_path }}/tomcat-users.xml {{ tomcat_path }}/conf/
       notify: startup tomcat
     - name: startup tomcat
       shell: JAVA_OPTS="-Dimplementation=mono -Diterations=500000 -Dusers=1 -DnbThreads=4" nohup {{ tomcat_path }}/bin/startup.sh &

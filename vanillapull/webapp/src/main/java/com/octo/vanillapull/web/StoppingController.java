@@ -1,26 +1,12 @@
 package com.octo.vanillapull.web;
 
-import com.octo.vanillapull.model.Instrument;
-import com.octo.vanillapull.monitoring.meters.MetersManager;
-import com.octo.vanillapull.monitoring.writers.ThreadCountJsonWriter;
-import com.octo.vanillapull.repository.InstrumentDao;
-import com.octo.vanillapull.service.PricingService;
+import com.octo.vanillapull.monitoring.writers.JMXJsonWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-import javax.inject.Inject;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.Socket;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Henri Tremblay
@@ -34,7 +20,7 @@ public class StoppingController {
     public
     @ResponseBody
     double stop() {
-        ThreadCountJsonWriter.close();
+        JMXJsonWriter.close();
         return 0;
     }
 }

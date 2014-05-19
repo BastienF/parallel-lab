@@ -1,18 +1,21 @@
 ---
 - hosts: server
   vars:
-    vagrant_path: /vagrant
-    tomcat_path: "/home/vagrant/apache-tomcat-7.0.52/"
-    jetty_path: "/home/vagrant/jetty-distribution-9.1.3.v20140225/"
-    vanillapull_dest_path: "/home/vagrant/parallel-lab/vanillapull/"
-    webappWriterPath: "-DwriterPath=/vagrant/tmp/threadCount.json"
+    distant_home: "/home/{{ distant_user }}"
+    tomcat_path: "{{ distant_home }}/apache-tomcat-7.0.52/"
+    jetty_path: "{{ distant_home }}/jetty-distribution-9.1.3.v20140225/"
+    vanillapull_dest_path: "{{ distant_home }}/parallel-lab/vanillapull/"
+    to_bring_back: "{{ distant_home }}/toBringBack"
+    webappWriterPath: "{{ to_bring_back }}/threadCount.json"
   sudo: yes
-  user: vagrant
+  user: ${distant_user}
   tasks:
     - name: clean
-      command: rm /vagrant/tmp/threadCount.json
+      command: rm {{ to_bring_back }}/threadCount.json
       ignore_errors: true
       sudo: true
+    - name: prepare log gc
+      command: mkdir -p {{ to_bring_back }}/log_gc_{{ launchDate }}
     - name: shutdown tomcat
       command: bash {{ tomcat_path }}/bin/shutdown.sh
       sudo: true
@@ -20,7 +23,7 @@
       command: bash {{ jetty_path }}/bin/jetty.sh stop
       sudo: true
     - name: shutdown httpcore
-      command: wget http://localhost:8080/vanillapull-1.0-SNAPSHOT/stop
+      command: wget http://localhost:8080/vanillapull-1.0-SNAPSHOT/stopper/stop/
       ignore_errors: yes
       notify: ${server}
   handlers:
@@ -35,45 +38,67 @@
       notify: startup httpcore
 
     - name: startup tomcat
-      shell: JAVA_OPTS="-Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} {{ webappWriterPath }}" nohup {{ tomcat_path }}/bin/startup.sh &
+      shell: JAVA_OPTS="-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} -DwriterPath={{ webappWriterPath }}" nohup {{ tomcat_path }}/bin/startup.sh &
       sudo: true
 
     - name: startup jetty
-      command: bash {{ jetty_path }}/bin/jetty.sh start "-Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -Dthreads.min={{ nbThreads }} -Dthreads.max={{ nbThreads }} {{ webappWriterPath }}"
+      command: bash {{ jetty_path }}/bin/jetty.sh start "-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -Dthreads.min={{ nbThreads }} -Dthreads.max={{ nbThreads }} -DwriterPath={{ webappWriterPath }}"
       sudo: true
 
     - name: startup httpcore
-      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} {{ webappWriterPath }} 1>std.log 2>err.log
+      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java -DXX:+PrintGCDetails -DXX:+PrintTenuringDistribution -DXloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DwriterPath={{ webappWriterPath }} 1>std.log 2>err.log
       async: 1000000000000000000
       poll: 0
 
 - hosts: gatling
   vars:
-    vagrant_path: /vagrant
+    distant_home: "/home/{{ distant_user }}"
     vanillapull_src_path: "../vanillapull/"
-    vanillapull_dest_path: "/home/vagrant/parallel-lab/vanillapull/"
-    results_dest_path: "{{ vagrant_path }}/scenarios/{{ scenario }}/"
+    vanillapull_dest_path: "{{ distant_home }}/parallel-lab/vanillapull/"
+    to_bring_back: "{{ distant_home }}/toBringBack"
+    results_dest_path: "./scenarios/{{ scenario }}/"
     results_dest_path_launch: "{{ results_dest_path }}/{{ launchDate }}"
     results_src_path: "{{ vanillapull_dest_path }}/gatling/target/gatling/results/"
+    to_bring_back: "{{ distant_home }}/toBringBack"
+    webappWriterPath: "{{ to_bring_back }}/threadCount.json"
+    webappLogGCPath: "{{ to_bring_back }}/log_gc_{{ launchDate }}"
+    serverIp: "{{ hostvars['servero7']['privateIp'] }}"
   sudo: yes
-  user: vagrant
+  user: ${distant_user}
   tasks:
     - name: launch shoot
-      shell: cd {{vanillapull_dest_path}}; mvn -pl gatling gatling:execute -Dgatling.simulationClass=PricingSimulation -Dip=192.168.17.3 -Dusers={{ users }} -Dimplementation={{ implementation }} -Diterations={{ iterations }} -DlogPath=/home/vagrant/datalog-{{ launchDate }} -Dduration={{ duration }}
+      shell: cd {{vanillapull_dest_path}}; mvn -pl gatling gatling:execute -Dgatling.simulationClass=PricingSimulation -Dip={{ serverIp }} -Dusers={{ users }} -Dimplementation={{ implementation }} -Diterations={{ iterations }} -DlogPath={{ distant_home }}/datalog-{{ launchDate }} -Dduration={{ duration }}
     - name: stop server
-      shell: wget 192.168.17.3:8080/vanillapull-1.0-SNAPSHOT/services/stopper/stop/
+      shell: wget {{ serverIp }}:8080/vanillapull-1.0-SNAPSHOT/services/stopper/stop/
       ignore_errors: true
+    - name: copy secukey
+      copy: src=~/.vagrant.d/insecure_private_key dest={{ distant_home }}/provisioning/parallelLab.pem owner=vagrant mode=0700
+      sudo: false
+      when: ${aws} == false
     - name: clean reports 1
-      shell: rm -r {{ results_dest_path_launch }}/{{ implementation }}_{{ users }}users_{{ iterations }}iter_results/; mkdir -p {{ results_dest_path_launch }}/{{ implementation }}_{{ users }}users_{{ iterations }}iter_results/;
-    - name: agregate reports 1
-      shell: cat /vagrant/tmp/threadCount.json >> /home/vagrant/datalog-{{ launchDate }}.json
+      local_action: shell rm -r {{ results_dest_path_launch }}/{{ implementation }}_{{ users }}users_{{ iterations }}iter_results/; mkdir -p {{ results_dest_path_launch }}/{{ implementation }}_{{ users }}users_{{ iterations }}iter_results/;
+      sudo: false
+    - name: agregate reports 1.1
+      command: scp -i {{ distant_home }}/provisioning/parallelLab.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {{ distant_user }}@{{ serverIp }}:{{ webappWriterPath }} {{ webappWriterPath }}
+      sudo: true
+    - name: agregate reports 1.2
+      shell: cat {{ webappWriterPath }} >> {{ distant_home }}/datalog-{{ launchDate }}.json
       sudo: true
       ignore_errors: yes
+    - name: agregate reports 2.1
+      local_action: shell mkdir -p {{ results_dest_path }}/log_gc_{{ launchDate }}
+      sudo: false
+    - name: agregate reports 2.2
+      command: scp -r -i {{ distant_home }}/provisioning/parallelLab.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {{ distant_user }}@{{ serverIp }}:{{ webappLogGCPath }} {{ webappLogGCPath }}
+      sudo: true
+    - name: agregate reports 2.3
+      synchronize: mode=pull src={{ webappLogGCPath }} dest={{ results_dest_path }}/log_gc_{{ launchDate }}/
+      sudo: true
     - name: clean reports 2
-      shell: cp /home/vagrant/datalog-{{ launchDate }}.json {{ results_dest_path }}/datalog-{{ launchDate }}.json
-    - name: clean reports 3
-      shell: cp /home/vagrant/datalog-{{ launchDate }}.csv {{ results_dest_path }}/datalog-{{ launchDate }}.csv
+      fetch: src={{ distant_home }}/datalog-{{ launchDate }}.json dest={{ results_dest_path }}/datalog-{{ launchDate }}.json flat=yes
+    - name: clean reports 2.1
+      fetch: src={{ distant_home }}/datalog-{{ launchDate }}.csv dest={{ results_dest_path }}/datalog-{{ launchDate }}.csv flat=yes
     - name: clean reports 4
-      command: cp -R {{ results_src_path }} {{ results_dest_path_launch }}/{{ implementation }}_{{ users }}users_{{ iterations }}iter_results/
+      synchronize: mode=pull src={{ results_src_path }} dest={{ results_dest_path_launch }}/{{ implementation }}_{{ users }}users_{{ iterations }}iter_results/
     - name: clean reports 5
       command: rm -r {{ results_src_path }}
