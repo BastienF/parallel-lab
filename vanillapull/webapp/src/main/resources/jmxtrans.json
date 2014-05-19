@@ -10,7 +10,7 @@
             }
         },
         {
-                "@class" : "com.octo.vanillapull.monitoring.writers.ThreadCountJsonWriter",
+                "@class" : "com.octo.vanillapull.monitoring.writers.JMXJsonWriter",
                 "settings" : {
                   "maxLogFileSize" : "10MB",
                   "maxLogBackupFiles" : 200,

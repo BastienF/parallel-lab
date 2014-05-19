@@ -23,3 +23,7 @@ AutoEnvOracle7/launch_multi_scenarios.sh
 scenarios
 
 AutoEnvOracle7/tmp/
+
+*.pem
+
+AutoEnvOracle7/test.yml

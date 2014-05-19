@@ -1,6 +1,6 @@
 [server]
-servero7 ansible_ssh_host=127.0.0.1 ansible_ssh_user=vagrant ansible_ssh_port=23457 host_key_checking=false
-servero8 ansible_ssh_host=127.0.0.1 ansible_ssh_user=vagrant ansible_ssh_port=23458 host_key_checking=false
+servero7 ansible_ssh_host=127.0.0.1 ansible_ssh_user=vagrant ansible_ssh_port=23457 host_key_checking=false privateIp=192.168.17.3
+servero8 ansible_ssh_host=127.0.0.1 ansible_ssh_user=vagrant ansible_ssh_port=23458 host_key_checking=false privateIp=192.168.17.3
 
 [gatling]
-gatlingo7 ansible_ssh_host=127.0.0.1 ansible_ssh_user=vagrant ansible_ssh_port=12347 host_key_checking=false
+gatlingo7 ansible_ssh_host=127.0.0.1 ansible_ssh_user=vagrant ansible_ssh_port=12347 host_key_checking=false privateIp=192.168.17.2

@@ -1,23 +1,15 @@
 package com.octo.vanillapull.service;
 
 import akka.actor.*;
-import akka.actor.Status.Success;
-import akka.routing.RoundRobinRouter;
 import akka.util.Timeout;
-
 import com.octo.vanillapull.actor.Master;
 import com.octo.vanillapull.actor.ResultListener;
 import com.octo.vanillapull.actor.Work;
-import com.octo.vanillapull.util.StdRandom;
-import com.octo.vanillapull.web.ContextInitializer;
-import com.sun.swing.internal.plaf.synth.resources.synth;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
@@ -25,7 +17,7 @@ import scala.concurrent.duration.Duration;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-import static akka.pattern.Patterns.*;
+import static akka.pattern.Patterns.ask;
 
 /**
  * @author Henri Tremblay

@@ -1,0 +1,21 @@
+---
+- hosts: server
+  vars:
+    graphite_state: "not_installed"
+    tomcat_state: "not_installed"
+    jetty_state: "not_installed"
+    distant_home: "/home/ubuntu"
+    provisioning_path: "{{ distant_home }}/provisioning"
+  sudo: yes
+  user: ubuntu
+  tasks:
+    - name: Clean local project
+      local_action: shell cd ../vanillapull/; mvn clean cd gatling-json/gatling; mvn clean; cd ../gatling-highcharts; mvn clean; 
+      sudo: false
+    - name: archive local project
+      local_action: command tar -vzcf tmp/vanillapull.tar.gz ../vanillapull
+      sudo: false
+    - name: creating required path
+      command: mkdir -p "{{ distant_home }}/parallel-lab/vanillapull/"
+    - name: transfer and untar projects
+      unarchive: src=tmp/vanillapull.tar.gz dest={{ distant_home }}/parallel-lab/
