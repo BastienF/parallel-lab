@@ -14,7 +14,8 @@
     - name: clean webapp
       shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp clean package -Dimplementation=mono -Diterations=500000 -Dusers=1 {{ webappWriterPath }}
     - name: shutdown tomcat
-      command: bash {{ tomcat_path }}/bin/shutdown.sh
+      shell: ${tomcat_path}/bin/shutdown.sh; pkill -f catalina
+      ignore_errors: yes
       sudo: true
     - name: shutdown jetty
       command: bash {{ jetty_path }}/bin/jetty.sh stop

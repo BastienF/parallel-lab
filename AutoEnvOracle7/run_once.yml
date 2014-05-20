@@ -17,7 +17,8 @@
     - name: prepare log gc
       command: mkdir -p {{ to_bring_back }}/log_gc_{{ launchDate }}
     - name: shutdown tomcat
-      command: bash {{ tomcat_path }}/bin/shutdown.sh
+      shell: ${tomcat_path}/bin/shutdown.sh; pkill -f catalina
+      ignore_errors: yes
       sudo: true
     - name: shutdown jetty
       command: bash {{ jetty_path }}/bin/jetty.sh stop
@@ -69,7 +70,7 @@
     - name: launch shoot
       shell: cd {{vanillapull_dest_path}}; mvn -pl gatling gatling:execute -Dgatling.simulationClass=PricingSimulation -Dip={{ serverIp }} -Dusers={{ users }} -Dimplementation={{ implementation }} -Diterations={{ iterations }} -DlogPath={{ distant_home }}/datalog-{{ launchDate }} -Dduration={{ duration }}
     - name: stop server
-      shell: wget {{ serverIp }}:8080/vanillapull-1.0-SNAPSHOT/services/stopper/stop/
+      shell: wget {{ serverIp }}:8080/vanillapull-1.0-SNAPSHOT/services/stopper/stop/; sleep 5
       ignore_errors: true
     - name: copy secukey
       copy: src=~/.vagrant.d/insecure_private_key dest={{ distant_home }}/provisioning/parallelLab.pem owner=vagrant mode=0700
