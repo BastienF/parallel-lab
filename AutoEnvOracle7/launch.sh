@@ -95,6 +95,7 @@ done < "scenarios/$scenario/scenario.csv"
 
 echo "executed in" $(((`date +%s` - $date)/60)) "minutes"
 if [ "$aws" = true ] ; then
+  aws ec2 reboot-instances --instance-ids `cat tmp/aws_instances_id`
   echo "Don't forget to run \`cat tmp/stopAwsCommand\` to shutdown AWS"
 else
   vagrant halt >> vagrant.log;
