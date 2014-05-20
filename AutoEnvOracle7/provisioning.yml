@@ -37,11 +37,11 @@
       apt: pkg={{ item }} state=latest
       with_items:
         - maven
+        - collectd
     - name: ensure optional packages required are installed
       apt: pkg={{ item }} state=latest
       with_items:
         - python-apt
-        - collectd
         - git
       when: ${full}
     - name: add java oracle repo
@@ -63,7 +63,6 @@
     - name: configure collectd
       command: cp {{ provisioning_path }}/collectd.conf /etc/collectd/collectd.conf
       sudo: true
-      when: ${full}
     - name: testif graphite is already installed
       action: shell test -d {{ distant_home }}/setup-graphite/ && echo "\"installed\"" || echo "\"not_installed\""
       register: graphite_state

@@ -60,6 +60,8 @@ aws ec2 run-instances --image-id ami-776d9700 --key-name parallelLab --instance-
 iidGat=`cat ./tmp/aws-output.json | jq ".Instances[0].InstanceId" | sed 's/"//g'`
 echo "instanceGatId: $iidGat"
 
+echo -n "$iidServ $iidGat" > tmp/aws_instances_id
+
 privateIpGat=`cat ./tmp/aws-output.json | jq ".Instances[0].PrivateIpAddress" | sed 's/"//g'`
 echo "privateIpGat: $privateIpGat"
 
@@ -87,4 +89,6 @@ cat tmp/stopAwsCommand
 
 echo "executed in" $(((`date +%s` - $date)/60)) "minutes"
 
-ssh -i ~/Downloads/parallelLab.pem ubuntu@$publicIpServ
+ssh -i ./provisioning/parallelLab.pem ubuntu@$publicIpServ 'echo "127.0.0.1" `hostname` | sudo tee -a /etc/hosts'
+ssh -i ./provisioning/parallelLab.pem ubuntu@$publicIpGat 'echo "127.0.0.1" `hostname` | sudo tee -a /etc/hosts'
+aws ec2 reboot-instances --instance-ids $iidServ $iidGat
