@@ -23,6 +23,7 @@ public class LogWriter {
 
     private final ActorSystem system;
     private final ActorRef logWriterActor;
+    private boolean started = false;
 
     public LogWriter() {
         system = ActorSystem.create("LoggerSystem");
@@ -33,12 +34,22 @@ public class LogWriter {
         }));
     }
 
+    public boolean isStarted() {
+        return started;
+    }
+
     public void log(String message) {
-        ask(logWriterActor, message, new Timeout(Duration.create(60, "seconds")));
+        if (started)
+            ask(logWriterActor, message, new Timeout(Duration.create(60, "seconds")));
     }
 
     public void flush() {
-        ask(logWriterActor, "stop", new Timeout(Duration.create(60, "seconds")));
+        if (started)
+            ask(logWriterActor, "stop", new Timeout(Duration.create(60, "seconds")));
+    }
+
+    public void start() {
+        started = true;
     }
 
     private class LogWriterActor extends UntypedActor {

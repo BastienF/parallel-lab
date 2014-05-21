@@ -37,10 +37,12 @@ public class MetricsLogger {
     }
 
     public void addContextSwitching (int contextSwitching) {
-        if (lastContextSwitching == null) {
-            initContextSwitching = contextSwitching;
+        if (writerActor.isStarted()) {
+            if (lastContextSwitching == null) {
+                initContextSwitching = contextSwitching;
+            }
+            lastContextSwitching = contextSwitching - initContextSwitching;
         }
-        lastContextSwitching = contextSwitching - initContextSwitching;
     }
 
     @Scheduled(fixedDelay = 2000)

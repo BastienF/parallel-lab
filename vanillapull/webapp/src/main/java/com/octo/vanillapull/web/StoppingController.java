@@ -28,4 +28,12 @@ public class StoppingController {
         writerActor.flush();
         return 0;
     }
+
+    @RequestMapping(value = "/start", method = RequestMethod.GET, produces = "application/json")
+    public
+    @ResponseBody
+    double start() {
+        writerActor.start();
+        return 0;
+    }
 }

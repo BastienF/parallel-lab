@@ -1,18 +1,17 @@
 package com.octo.vanillapull.web;
 
-import com.octo.vanillapull.monitoring.meters.MetersManager;
+import com.octo.vanillapull.monitoring.writers.LogWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
-
-import javax.inject.Inject;
 
 public class ContextInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 	public final static Logger logger = LoggerFactory.getLogger(ContextInitializer.class);
 
-    @Inject
-    private MetersManager metersManager;
+    @Autowired
+    private LogWriter writerActor;
 	
 	@Override
 	public void initialize(ConfigurableApplicationContext applicationContext) {
@@ -21,5 +20,8 @@ public class ContextInitializer implements ApplicationContextInitializer<Configu
 		logger.info("\n\t\tAlgorithm implementation is :\"" + implementation + "\"");
 		logger.info("\n-----------------------------------------------------------------");
 		applicationContext.getEnvironment().setActiveProfiles(implementation);
+        String warmup = System.getProperty("warmup");
+        if (warmup == null || !warmup.equals("true"))
+            writerActor.start();
     }
 }

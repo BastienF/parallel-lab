@@ -39,15 +39,15 @@
       notify: startup httpcore
 
     - name: startup tomcat
-      shell: JAVA_OPTS="-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} -DwriterPath={{ webappWriterPath }}" nohup {{ tomcat_path }}/bin/startup.sh &
+      shell: JAVA_OPTS="-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} -DwriterPath={{ webappWriterPath }} -Dwarmup=true" nohup {{ tomcat_path }}/bin/startup.sh &
       sudo: true
 
     - name: startup jetty
-      command: bash {{ jetty_path }}/bin/jetty.sh start "-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -Dthreads.min={{ nbThreads }} -Dthreads.max={{ nbThreads }} -DwriterPath={{ webappWriterPath }}"
+      command: bash {{ jetty_path }}/bin/jetty.sh start "-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -Dthreads.min={{ nbThreads }} -Dthreads.max={{ nbThreads }} -DwriterPath={{ webappWriterPath }}  -Dwarmup=true"
       sudo: true
 
     - name: startup httpcore
-      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java -DXX:+PrintGCDetails -DXX:+PrintTenuringDistribution -DXloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DwriterPath={{ webappWriterPath }} 1>std.log 2>err.log
+      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java -DXX:+PrintGCDetails -DXX:+PrintTenuringDistribution -DXloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DwriterPath={{ webappWriterPath }}  -Dwarmup=true 1>std.log 2>err.log
       async: 1000000000000000000
       poll: 0
 
@@ -67,10 +67,16 @@
   sudo: yes
   user: ${distant_user}
   tasks:
+    - name: warm up shoot
+      shell: cd {{vanillapull_dest_path}}; mvn -pl gatling gatling:execute -Dgatling.simulationClass=PricingSimulation -Dip={{ serverIp }} -Dusers={{ users }} -Dimplementation={{ implementation }} -Diterations={{ iterations }} -DlogPath=/dev/null -Dduration=30
+    - name: clean warm up reports
+      command: rm -r {{ results_src_path }}
+    - name: Start server reccording
+      shell: wget {{ serverIp }}:8080/vanillapull-1.0-SNAPSHOT/services/stopper/start/; sleep 1
     - name: launch shoot
       shell: cd {{vanillapull_dest_path}}; mvn -pl gatling gatling:execute -Dgatling.simulationClass=PricingSimulation -Dip={{ serverIp }} -Dusers={{ users }} -Dimplementation={{ implementation }} -Diterations={{ iterations }} -DlogPath={{ distant_home }}/datalog-{{ launchDate }} -Dduration={{ duration }}
     - name: stop server
-      shell: wget {{ serverIp }}:8080/vanillapull-1.0-SNAPSHOT/services/stopper/stop/; sleep 5
+      shell: wget {{ serverIp }}:8080/vanillapull-1.0-SNAPSHOT/services/stopper/stop/; sleep 1
       ignore_errors: true
     - name: copy secukey
       copy: src=~/.vagrant.d/insecure_private_key dest={{ distant_home }}/provisioning/parallelLab.pem owner=vagrant mode=0700
