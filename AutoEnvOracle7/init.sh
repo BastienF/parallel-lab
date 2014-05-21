@@ -4,7 +4,7 @@ date=`date +%s`
 while [ $# -gt 0 ]
 do
     case "$1" in
-  --use-aws) aws=true; shift;;
+  --use-aws) aws=true;;
   -*) echo >&2 \
       "wrong var: usage: $0 [--use-aws]"
       exit 1;;

@@ -8,7 +8,7 @@ do
   --scenario) scenario="$2"; shift;;
   --server) server="$2"; shift;;
   --nbThreads) nbThreads="$2"; shift;;
-  --use-aws) aws=true; shift;;
+  --use-aws) aws=true;;
   -*) echo >&2 \
       "wrong var: usage: $0 --scenario scenario [--server server] [--nbThreads nbThreads] [--use-aws]"
       exit 1;;
