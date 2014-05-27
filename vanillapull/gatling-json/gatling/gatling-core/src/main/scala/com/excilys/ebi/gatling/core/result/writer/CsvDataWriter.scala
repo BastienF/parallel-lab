@@ -37,11 +37,14 @@ object CsvDataWriter {
   def sanitize(input: String): String = Option(sanitizerPattern.replaceAllIn(input, " ")).getOrElse("")
 
   def serialize(requestRecord: RequestRecord) = {
-    new StringBuilder()
-      .append(System.getProperty("implementation")).append(";")
+    val strBuild: StringBuilder = new StringBuilder()
+    strBuild.append(System.getProperty("implementation")).append(";")
       .append(requestRecord.requestStatus.toString).append(";")
-      .append(System.getProperty("iterations")).append(";")
-      .append((requestRecord.responseReceivingStartDate - requestRecord.requestSendingEndDate).toString).append(";")
+    if (System.getProperty("iterations") != null)
+      strBuild.append(System.getProperty("iterations")).append(";")
+    else
+      strBuild.append(System.getProperty("delay")).append(";")
+    strBuild.append((requestRecord.responseReceivingStartDate - requestRecord.requestSendingEndDate).toString).append(";")
       .append(System.getProperty("duration")).append(";")
       .append(System.getProperty("users")).append("\n")
       .toString.getBytes(configuration.core.encoding)
@@ -107,7 +110,8 @@ class CsvDataWriter extends DataWriter with Logging {
   }
 
   override def onRequestRecord(requestRecord: RequestRecord) {
-    write(serialize(requestRecord))
+    if (requestRecord.requestStatus.toString == "KO")
+      write(serialize(requestRecord))
   }
 
   override def onFlushDataWriter {

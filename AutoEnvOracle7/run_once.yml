@@ -7,6 +7,7 @@
     vanillapull_dest_path: "{{ distant_home }}/parallel-lab/vanillapull/"
     to_bring_back: "{{ distant_home }}/toBringBack"
     webappWriterPath: "{{ to_bring_back }}/threadCount.json"
+    full_params: "-Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} -Dduration={{ duration }} -Dwarmup=true -DsynchronizationMode={{ synchronizationMode }} -DnoSynchronization_delay={{ noSynchronization_delay }}  -Dserver={{ server }} -Daws={{ aws }} -Dlanguage={{ language }} -XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog"
   sudo: yes
   user: ${distant_user}
   tasks:
@@ -39,15 +40,15 @@
       notify: startup httpcore
 
     - name: startup tomcat
-      shell: JAVA_OPTS="-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} -DwriterPath={{ webappWriterPath }}  -Dduration={{ duration }} -Dwarmup=true -DsynchronizationMode={{ synchronizationMode }} -DnoSynchronization_delay={{ noSynchronization_delay }}" nohup {{ tomcat_path }}/bin/startup.sh &
+      shell: JAVA_OPTS="{{ full_params }} -DwriterPath={{ webappWriterPath }}" nohup {{ tomcat_path }}/bin/startup.sh &
       sudo: true
 
     - name: startup jetty
-      command: bash {{ jetty_path }}/bin/jetty.sh start "-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -Dthreads.min={{ nbThreads }} -Dthreads.max={{ nbThreads }} -DwriterPath={{ webappWriterPath }} -Dduration={{ duration }} -Dwarmup=true -DsynchronizationMode={{ synchronizationMode }} -DnoSynchronization_delay={{ noSynchronization_delay }}"
+      command: bash {{ jetty_path }}/bin/jetty.sh start "{{ full_params }} -Dthreads.min={{ nbThreads }} -Dthreads.max={{ nbThreads }} -DwriterPath={{ webappWriterPath }}"
       sudo: true
 
     - name: startup httpcore
-      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java -DXX:+PrintGCDetails -DXX:+PrintTenuringDistribution -DXloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DwriterPath={{ webappWriterPath }}  -Dduration={{ duration }} -Dwarmup=true -DsynchronizationMode={{ synchronizationMode }} -DnoSynchronization_delay={{ noSynchronization_delay }} 1>std.log 2>err.log
+      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java {{full_params}} -DwriterPath={{ webappWriterPath }}" 1>std.log 2>err.log
       async: 1000000000000000000
       poll: 0
 
@@ -64,17 +65,18 @@
     webappWriterPath: "{{ to_bring_back }}/threadCount.json"
     webappLogGCPath: "{{ to_bring_back }}/log_gc_{{ launchDate }}"
     serverIp: "{{ hostvars['servero7']['privateIp'] }}"
+    full_params: "-Dgatling.simulationClass=PricingSimulation -Dip={{ serverIp }} -Dusers={{ users }} -Dimplementation={{ implementation }} -Diterations={{ iterations }} -DnbThreads={{ nbThreads }} -DsynchronizationMode={{ synchronizationMode }} -DnoSynchronization_delay={{ noSynchronization_delay }}  -Dserver={{ server }} -Daws={{ aws }} -Dlanguage={{ language }}"
   sudo: yes
   user: ${distant_user}
   tasks:
     - name: warm up shoot
-      shell: cd {{vanillapull_dest_path}}; mvn -pl gatling gatling:execute -Dgatling.simulationClass=PricingSimulation -Dip={{ serverIp }} -Dusers={{ users }} -Dimplementation={{ implementation }} -Diterations={{ iterations }} -DlogPath=/dev/null -Dduration=30
+      shell: cd {{vanillapull_dest_path}}; mvn -pl gatling gatling:execute {{ full_params }} -DlogPath=/dev/null -Dduration=30
     - name: clean warm up reports
       command: rm -r {{ results_src_path }}
     - name: Start server reccording
       shell: wget {{ serverIp }}:8080/vanillapull-1.0-SNAPSHOT/services/stopper/start/; sleep 1
     - name: launch shoot
-      shell: cd {{vanillapull_dest_path}}; mvn -pl gatling gatling:execute -Dgatling.simulationClass=PricingSimulation -Dip={{ serverIp }} -Dusers={{ users }} -Dimplementation={{ implementation }} -Diterations={{ iterations }} -DlogPath={{ distant_home }}/gatlingResult-{{ launchDate }} -Dduration={{ duration }}
+      shell: cd {{vanillapull_dest_path}}; mvn -pl gatling gatling:execute {{ full_params }} -DlogPath={{ distant_home }}/gatlingResult-{{ launchDate }} -Dduration={{ duration }}
     - name: stop server
       shell: wget {{ serverIp }}:8080/vanillapull-1.0-SNAPSHOT/services/stopper/stop/; sleep 1
       ignore_errors: true
