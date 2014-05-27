@@ -1,5 +1,6 @@
-package com.octo.vanillapull.service;
+package com.octo.vanillapull.service.synchronization;
 
+import com.octo.vanillapull.service.synchronization.MonoThreadedMonteCarlo;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

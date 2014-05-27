@@ -1,39 +1,41 @@
-package com.octo.vanillapull.service;
+package com.octo.vanillapull.service.synchronization;
 
+import com.octo.vanillapull.service.PricingService;
 import com.octo.vanillapull.util.StdRandom;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.CountDownLatch;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 
 /**
  * @author Henri Tremblay
  */
-@Profile("naive")
+@Profile("pool")
 @Service
-public class NaiveMultiThreadedMonteCarlo implements PricingService {
+public class PoolMultiThreadedMonteCarlo implements PricingService {
 
-	private class MonteCarloThread extends Thread {
+	private class MonteCarloTask extends ForkJoinTask<Double> {
 
 		private final long nbIterations;
 		private double maturity, spot, strike, volatility;
 		double bestPremiumsComputed = 0;
-		private CountDownLatch latch;
 
-		public MonteCarloThread(long nbIterations, double maturity,
-				double spot, double strike, double volatility,
-				CountDownLatch latch) {
+		public MonteCarloTask(long nbIterations, double maturity, double spot,
+				double strike, double volatility) {
 			this.nbIterations = nbIterations;
 			this.maturity = maturity;
 			this.spot = spot;
 			this.strike = strike;
 			this.volatility = volatility;
-			this.latch = latch;
 		}
 
 		@Override
-		public void run() {
+		public boolean exec() {
 			for (long i = 0; i < nbIterations; i++) {
 				double gaussian = StdRandom.gaussian();
 				double priceComputed = computeMonteCarloIteration(spot,
@@ -42,8 +44,17 @@ public class NaiveMultiThreadedMonteCarlo implements PricingService {
 						priceComputed, strike);
 				bestPremiumsComputed += bestPremium;
 			}
+			return true;
+		}
 
-			latch.countDown();
+		@Override
+		public Double getRawResult() {
+			return bestPremiumsComputed;
+		}
+
+		@Override
+		protected void setRawResult(Double value) {
+			this.bestPremiumsComputed = value;
 		}
 	}
 
@@ -53,6 +64,17 @@ public class NaiveMultiThreadedMonteCarlo implements PricingService {
 	double interestRate;
 
 	private final int processors = Runtime.getRuntime().availableProcessors();
+	private ForkJoinPool pool;
+
+	@PostConstruct
+	public void init() throws Exception {
+		pool = new ForkJoinPool();
+	}
+
+	@PreDestroy
+	public void cleanUp() throws Exception {
+		pool.shutdown();
+	}
 
 	@Override
 	public double calculatePrice(double maturity, double spot, double strike,
@@ -62,27 +84,24 @@ public class NaiveMultiThreadedMonteCarlo implements PricingService {
 
 		long nbPerThreads = numberOfIterations / processors;
 
-		CountDownLatch latch = new CountDownLatch(processors);
-
-		MonteCarloThread[] threads = new MonteCarloThread[processors];
+		MonteCarloTask[] tasks = new MonteCarloTask[processors];
 		for (int i = 0; i < processors; i++) {
-			MonteCarloThread thread = new MonteCarloThread(nbPerThreads,
-					maturity, spot, strike, volatility, latch);
-			thread.setName(Thread.currentThread() + " monteCarlo " + i);
-			thread.start();
-			threads[i] = thread;
-		}
-
-		try {
-			latch.await();
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
+			MonteCarloTask task = new MonteCarloTask(nbPerThreads, maturity,
+					spot, strike, volatility);
+			pool.execute(task);
+			tasks[i] = task;
 		}
 
 		double bestPremiumsComputed = 0;
 
 		for (int i = 0; i < processors; i++) {
-			bestPremiumsComputed += threads[i].bestPremiumsComputed;
+			try {
+				bestPremiumsComputed += tasks[i].get();
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			} catch (ExecutionException e) {
+				throw new RuntimeException(e);
+			}
 		}
 
 		// Compute mean
@@ -99,12 +118,7 @@ public class NaiveMultiThreadedMonteCarlo implements PricingService {
 		return pricedValue;
 	}
 
-    @Override
-    public void init() throws Exception {
-
-    }
-
-    public double computeMonteCarloIteration(double spot, double rate,
+	public double computeMonteCarloIteration(double spot, double rate,
 			double volatility, double gaussian, double maturity) {
 		double result = spot
 				* Math.exp((rate - Math.pow(volatility, 2) * 0.5) * maturity

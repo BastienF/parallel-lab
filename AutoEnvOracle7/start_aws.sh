@@ -32,8 +32,8 @@ secuGroupId=`aws ec2 create-security-group --group-name parallelLabSecurityGroup
 echo "secuGroupId: $secuGroupId"
 
 openTCPPort () {
-	aws ec2 authorize-security-group-ingress --group-id $secuGroupId --protocol tcp --port $1 --cidr `curl ifconfig.me`/0
-	aws ec2 authorize-security-group-egress --group-id $secuGroupId --protocol tcp --port $1 --cidr `curl ifconfig.me`/0
+	aws ec2 authorize-security-group-ingress --group-id $secuGroupId --protocol tcp --port $1 --cidr 0.0.0.0/0
+	aws ec2 authorize-security-group-egress --group-id $secuGroupId --protocol tcp --port $1 --cidr 0.0.0.0/0
 }
 
 sleep 1

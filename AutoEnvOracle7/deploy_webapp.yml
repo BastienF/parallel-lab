@@ -46,12 +46,12 @@
       sudo: true
       notify: undeploy tomcat webapp
     - name: undeploy tomcat webapp
-      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp tomcat7:undeploy  -Dimplementation=mono -Diterations=500000 -Dusers=1 {{ webappWriterPath }}
+      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp tomcat7:undeploy  -Dimplementation=mono -Diterations=500000 -Dusers=1  -Dduration=30 {{ webappWriterPath }}
       notify: deploy tomcat webapp
     - name: deploy tomcat webapp
-      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp tomcat7:deploy  -Dimplementation=mono -Diterations=500000 -Dusers=1 {{ webappWriterPath }}
+      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp tomcat7:deploy  -Dimplementation=mono -Diterations=500000 -Dusers=1  -Dduration=30 {{ webappWriterPath }}
     - name: deploy httpcore webapp
-      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp install -Dimplementation=mono -Diterations=500000 -Dusers=1 {{ webappWriterPath }}
+      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp install -Dimplementation=mono -Diterations=500000 -Dusers=1  -Dduration=30 {{ webappWriterPath }}
 
     - name: undeploy jetty webapp
       shell: rm {{ jetty_path }}/webapps/{{ war_name }}
@@ -62,5 +62,5 @@
       sudo: true
       notify: startup jetty
     - name: startup jetty
-      command: bash {{ jetty_path }}/bin/jetty.sh start "-Dimplementation=mono -Diterations=500000 -Dusers=1  {{ webappWriterPath }}"
+      command: bash {{ jetty_path }}/bin/jetty.sh start "-Dimplementation=mono -Diterations=500000 -Dusers=1  -Dduration=30  {{ webappWriterPath }}"
       sudo: true

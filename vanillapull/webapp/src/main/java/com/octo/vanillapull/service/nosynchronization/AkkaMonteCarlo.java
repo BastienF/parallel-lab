@@ -1,12 +1,16 @@
-package com.octo.vanillapull.service;
+package com.octo.vanillapull.service.nosynchronization;
 
 import akka.actor.*;
 import akka.util.Timeout;
 import com.octo.vanillapull.actor.Master;
+import com.octo.vanillapull.actor.NoSyncWork;
+import com.octo.vanillapull.actor.Result;
 import com.octo.vanillapull.actor.ResultListener;
-import com.octo.vanillapull.actor.Work;
+import com.octo.vanillapull.monitoring.writers.NoSyncResultLogger;
+import com.octo.vanillapull.service.PricingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -22,16 +26,21 @@ import static akka.pattern.Patterns.ask;
 /**
  * @author Henri Tremblay
  */
-@Profile("akka")
+@Profile("akkaNoSync")
 @Service
 public class AkkaMonteCarlo implements PricingService {
 	
 	public final static Logger logger = LoggerFactory.getLogger(AkkaMonteCarlo.class);
-	
+
+
+
+    @Autowired
+    private NoSyncResultLogger resultLogger;
+
+    long delayToStop = Long.valueOf(System.getProperty("noSynchronization_delay"));
 
 	public static final int processors = Runtime.getRuntime()
 			.availableProcessors();
-    long numberOfIterations = Integer.valueOf(System.getProperty("iterations"));;
 	@Value("${interestRate}")
 	double interestRate;
 
@@ -62,7 +71,7 @@ public class AkkaMonteCarlo implements PricingService {
 			double strike, double volatility) {
 
 		// start the calculation
-		Work work = new Work(numberOfIterations, maturity, spot, strike,
+        NoSyncWork work = new NoSyncWork(System.currentTimeMillis() + delayToStop, maturity, spot, strike,
 				volatility);
 
 		// Creating agregator - use to aggregate result from master
@@ -81,17 +90,20 @@ public class AkkaMonteCarlo implements PricingService {
 		Future<Object> future = ask(agregator, work, timeout);
 
 		double bestPremiumsComputed = 0;
+        int numberOfIterations = 0;
 		try {
 			if(logger.isDebugEnabled()) logger.debug("[SERVICE] Waiting thread");
-			bestPremiumsComputed = (Double) Await.result(future,
-					timeout.duration());
+            Result result = (Result) Await.result(future,
+                    timeout.duration());
+            bestPremiumsComputed = result.result;
+            numberOfIterations = result.numberOfIterations;
 			if(logger.isDebugEnabled()) logger.debug("[SERVICE] Releasing thread");
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		} finally {
 
 		}
-
+        resultLogger.write(numberOfIterations);
 		return bestPremiumsComputed;
 	}
 

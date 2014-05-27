@@ -24,12 +24,12 @@
         </property>
     </bean>
 
-    <jmxtrans:jmxtrans>
+    <!--<jmxtrans:jmxtrans>
         <jmxtrans:configuration>classpath:jmxtrans.json</jmxtrans:configuration>
         <jmxtrans:configuration>classpath:org/jmxtrans/embedded/config/tomcat-7.json</jmxtrans:configuration>
         <jmxtrans:configuration>classpath:org/jmxtrans/embedded/config/jmxtrans-internals.json</jmxtrans:configuration>
         <jmxtrans:configuration>classpath:org/jmxtrans/embedded/config/jvm-sun-hotspot.json</jmxtrans:configuration>
-    </jmxtrans:jmxtrans>
+    </jmxtrans:jmxtrans>-->
 
 	<!-- Root Context: defines web resources visible to all other web components -->
     <context:property-placeholder location="classpath:vanillapull.properties"/>
@@ -38,7 +38,8 @@
     <context:component-scan base-package="com.octo.vanillapull.monitoring.meters" />
     <context:component-scan base-package="com.octo.vanillapull.monitoring.writers" />
     <task:annotation-driven />
-    <context:component-scan base-package="com.octo.vanillapull.service" />
+    <context:component-scan base-package="com.octo.vanillapull.service.synchronization" />
+    <context:component-scan base-package="com.octo.vanillapull.service.nosynchronization" />
 
     <!-- Add MBeans -->
     <context:mbean-export/>

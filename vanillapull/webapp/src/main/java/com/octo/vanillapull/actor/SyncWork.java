@@ -1,11 +1,10 @@
 package com.octo.vanillapull.actor;
 
-public class Work {
-	long nbIterations;
-	double maturity, spot, strike, volatility;
+public class SyncWork extends AWork {
+	int nbIterations;
 
-	public Work(long nbIterations, double maturity, double spot,
-			double strike, double volatility) {
+	public SyncWork(int nbIterations, double maturity, double spot,
+                    double strike, double volatility) {
 		this.nbIterations = nbIterations;
 		this.maturity = maturity;
 		this.spot = spot;

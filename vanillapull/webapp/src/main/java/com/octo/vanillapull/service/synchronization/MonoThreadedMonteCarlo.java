@@ -1,5 +1,6 @@
-package com.octo.vanillapull.service;
+package com.octo.vanillapull.service.synchronization;
 
+import com.octo.vanillapull.service.PricingService;
 import com.octo.vanillapull.util.StdRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +26,6 @@ public class MonoThreadedMonteCarlo implements PricingService {
 	@Override
 	public double calculatePrice(double maturity, double spot, double strike,
 			double volatility) {
-
-
 
 		double bestPremiumsComputed = 0;
 

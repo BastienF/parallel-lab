@@ -6,7 +6,7 @@ import akka.actor.UntypedActor;
 import akka.actor.UntypedActorFactory;
 import akka.routing.RoundRobinRouter;
 
-import com.octo.vanillapull.service.AkkaMonteCarlo;
+import com.octo.vanillapull.service.synchronization.AkkaMonteCarlo;
 
 public class Master extends UntypedActor {
 	private final ActorRef workerRouter;
@@ -24,8 +24,8 @@ public class Master extends UntypedActor {
 	
 	
 	public void onReceive(Object message) {
-		if (message instanceof Work) {
-			Work work = (Work) message;
+		if (message instanceof AWork) {
+			AWork work = (AWork) message;
 
 			for (int i = 0; i < AkkaMonteCarlo.processors; i++) {
 				workerRouter.tell(work, getSender());

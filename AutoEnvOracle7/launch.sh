@@ -8,9 +8,10 @@ do
   --scenario) scenario="$2"; shift;;
   --server) server="$2"; shift;;
   --nbThreads) nbThreads="$2"; shift;;
+  --noSynchronization_delay) delay="$2"; shift;;
   --use-aws) aws=true;;
   -*) echo >&2 \
-      "wrong var: usage: $0 --scenario scenario [--server server] [--nbThreads nbThreads] [--use-aws]"
+      "wrong var: usage: $0 --scenario scenario [--server server] [--nbThreads nbThreads] [--noSynchronization_delay delay] [--use-aws]"
       exit 1;;
   *)  break;; # terminate while loop
     esac
@@ -19,7 +20,7 @@ done
 
 if [ -z "$scenario" ]; then
   echo >&2 \
-      "not enougth vars: usage: $0 --scenario scenario [--server server] [--nbThreads nbThreads] [--use-aws]"
+      "not enougth vars: usage: $0 --scenario scenario [--server server] [--nbThreads nbThreads] [--noSynchronization_delay delay] [--use-aws]"
   exit 1
 fi
 
@@ -48,11 +49,20 @@ if [ -z "$nbThreads" ]; then
   nbThreads=200
 fi
 
+if [ -z "$delay" ]; then 
+  noSyncDelayPar="noSynchronization_delay=0"
+  synchronizationMode="true"
+else
+  noSyncDelayPar="noSynchronization_delay=$delay"
+  synchronizationMode="false"
+  synchName="noSyncMode-"$delay"ms"
+fi
+
 if [ -z "$server" ]; then 
 	server="tomcat"
 fi
 
-launchDate="$LANGUAGE-$server-nbThreads$nbThreads-`date '+%d-%m-%Y.%T'`"
+launchDate="$LANGUAGE-$server-nbThreads$nbThreads-$synchName`date '+%d-%m-%Y.%T'`"
 if [ "$aws" = true ] ; then
     launchDate="AWS-$launchDate"
 fi
@@ -67,16 +77,15 @@ fi
 launch () {
 	      date
         echo "Run with iterations=$3 implementation=$1 users=$2 launchDate=$launchDate duration=$4 server=$server scenario=$scenario"
-        ansible-playbook -i $HOSTS -l $VM_SERVER run_once.yml --private-key=$PKEY --extra-vars 'iterations='$3' implementation='$1' users='$2' launchDate='$launchDate' duration='$4' server='$server' scenario='$scenario' nbThreads='$nbThreads' distant_user='$distant_user' aws='$aws
+        ansible-playbook -i $HOSTS -l $VM_SERVER run_once.yml --private-key=$PKEY --extra-vars 'iterations='$3' implementation='$1' users='$2' launchDate='$launchDate' duration='$4' server='$server' scenario='$scenario' nbThreads='$nbThreads' distant_user='$distant_user' synchronizationMode='$synchronizationMode' '$noSyncDelayPar' aws='$aws
         if [ "$?" = "0" ]; then
-        	ansible-playbook -i $HOSTS -l gatling run_once.yml --private-key=$PKEY --extra-vars 'iterations='$3' implementation='$1' users='$2' launchDate='$launchDate' duration='$4' server='$server' scenario='$scenario' distant_user='$distant_user' aws='$aws
+        	ansible-playbook -i $HOSTS -l gatling run_once.yml --private-key=$PKEY --extra-vars 'iterations='$3' implementation='$1' users='$2' launchDate='$launchDate' duration='$4' server='$server' scenario='$scenario' distant_user='$distant_user' synchronizationMode='$synchronizationMode' '$noSyncDelayPar' aws='$aws
         else
         	echo "[ERROR] run_once of server failed !"
         fi
 }
 
 launch_all() {
-        #launch mock $1 $2 $3;
         launch akka $1 $2 $3;
         launch naive $1 $2 $3;
        	launch mono $1 $2 $3;

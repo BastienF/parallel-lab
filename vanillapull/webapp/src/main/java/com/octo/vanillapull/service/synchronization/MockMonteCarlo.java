@@ -1,5 +1,6 @@
-package com.octo.vanillapull.service;
+package com.octo.vanillapull.service.synchronization;
 
+import com.octo.vanillapull.service.PricingService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 

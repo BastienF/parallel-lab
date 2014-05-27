@@ -9,13 +9,6 @@
 		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd
 		http://www.jmxtrans.org/schema/embedded http://www.jmxtrans.org/schema/embedded/jmxtrans.xsd">
 
-    <jmxtrans:jmxtrans>
-        <jmxtrans:configuration>classpath:jmxtrans.json</jmxtrans:configuration>
-        <jmxtrans:configuration>classpath:org/jmxtrans/embedded/config/tomcat-7.json</jmxtrans:configuration>
-        <jmxtrans:configuration>classpath:org/jmxtrans/embedded/config/jmxtrans-internals.json</jmxtrans:configuration>
-        <jmxtrans:configuration>classpath:org/jmxtrans/embedded/config/jvm-sun-hotspot.json</jmxtrans:configuration>
-    </jmxtrans:jmxtrans>
-
     <context:component-scan base-package="com.octo.vanillapull.web" />
 
 </beans>

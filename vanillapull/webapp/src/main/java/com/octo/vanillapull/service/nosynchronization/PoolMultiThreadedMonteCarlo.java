@@ -1,6 +1,9 @@
-package com.octo.vanillapull.service;
+package com.octo.vanillapull.service.nosynchronization;
 
+import com.octo.vanillapull.monitoring.writers.NoSyncResultLogger;
+import com.octo.vanillapull.service.PricingService;
 import com.octo.vanillapull.util.StdRandom;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -10,23 +13,24 @@ import javax.annotation.PreDestroy;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Henri Tremblay
  */
-@Profile("pool")
+@Profile("poolNoSync")
 @Service
 public class PoolMultiThreadedMonteCarlo implements PricingService {
 
 	private class MonteCarloTask extends ForkJoinTask<Double> {
 
-		private final long nbIterations;
 		private double maturity, spot, strike, volatility;
 		double bestPremiumsComputed = 0;
+        private AtomicBoolean shouldStop = new AtomicBoolean(false);
+        private int numberOfIterations = 0;
 
-		public MonteCarloTask(long nbIterations, double maturity, double spot,
+		public MonteCarloTask(double maturity, double spot,
 				double strike, double volatility) {
-			this.nbIterations = nbIterations;
 			this.maturity = maturity;
 			this.spot = spot;
 			this.strike = strike;
@@ -35,16 +39,25 @@ public class PoolMultiThreadedMonteCarlo implements PricingService {
 
 		@Override
 		public boolean exec() {
-			for (long i = 0; i < nbIterations; i++) {
+			while (!shouldStop.get()) {
 				double gaussian = StdRandom.gaussian();
 				double priceComputed = computeMonteCarloIteration(spot,
 						interestRate, volatility, gaussian, maturity);
 				double bestPremium = computePremiumForMonteCarloIteration(
 						priceComputed, strike);
 				bestPremiumsComputed += bestPremium;
+                numberOfIterations++;
 			}
 			return true;
 		}
+
+        public void stop(){
+            shouldStop.set(true);
+        }
+
+        public int getNumberOfIterations() {
+            return numberOfIterations;
+        }
 
 		@Override
 		public Double getRawResult() {
@@ -58,7 +71,11 @@ public class PoolMultiThreadedMonteCarlo implements PricingService {
 	}
 
 
-    long numberOfIterations = Integer.valueOf(System.getProperty("iterations"));
+
+    @Autowired
+    private NoSyncResultLogger resultLogger;
+
+    long delayToStop = Long.valueOf(System.getProperty("noSynchronization_delay"));
 	@Value("${interestRate}")
 	double interestRate;
 
@@ -81,11 +98,9 @@ public class PoolMultiThreadedMonteCarlo implements PricingService {
 
 		maturity /= 360.0;
 
-		long nbPerThreads = numberOfIterations / processors;
-
 		MonteCarloTask[] tasks = new MonteCarloTask[processors];
 		for (int i = 0; i < processors; i++) {
-			MonteCarloTask task = new MonteCarloTask(nbPerThreads, maturity,
+			MonteCarloTask task = new MonteCarloTask(maturity,
 					spot, strike, volatility);
 			pool.execute(task);
 			tasks[i] = task;
@@ -93,7 +108,17 @@ public class PoolMultiThreadedMonteCarlo implements PricingService {
 
 		double bestPremiumsComputed = 0;
 
-		for (int i = 0; i < processors; i++) {
+        try {
+            Thread.sleep(delayToStop);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        int numberOfIterations = 0;
+
+        for (int i = 0; i < processors; i++) {
+            tasks[i].stop();
 			try {
 				bestPremiumsComputed += tasks[i].get();
 			} catch (InterruptedException e) {
@@ -101,11 +126,12 @@ public class PoolMultiThreadedMonteCarlo implements PricingService {
 			} catch (ExecutionException e) {
 				throw new RuntimeException(e);
 			}
+            numberOfIterations += tasks[i].getNumberOfIterations();
 		}
 
 		// Compute mean
 		double meanOfPremiums = bestPremiumsComputed
-				/ (nbPerThreads * processors); // not using numberOfIterations
+				/ (numberOfIterations); // not using numberOfIterations
 												// because the rounding might
 												// might have truncate some
 												// iterations
@@ -114,6 +140,8 @@ public class PoolMultiThreadedMonteCarlo implements PricingService {
 		double pricedValue = Math.exp(-interestRate * maturity)
 				* meanOfPremiums;
 
+
+        resultLogger.write(numberOfIterations);
 		return pricedValue;
 	}
 
