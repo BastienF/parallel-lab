@@ -27,7 +27,7 @@ public class Worker extends UntypedActor {
             } else if (message instanceof NoSyncWork) {
                 NoSyncWork work = (NoSyncWork) message;
 
-                while (System.currentTimeMillis() < work.timeToStop) {
+                while (!work.getShouldStop()) {
                     bestPremiumsComputed += computeOneIteration(work);
                     numberOfIterations++;
                 }

@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Henri Tremblay
@@ -19,6 +20,56 @@ import javax.annotation.PostConstruct;
 @Service
 public class MonoThreadedMonteCarlo implements PricingService {
     public final static Logger logger = LoggerFactory.getLogger(MonoThreadedMonteCarlo.class);
+
+    private class MonoIterRunnable implements Runnable {
+        public int getNumberOfIterations() {
+            return numberOfIterations;
+        }
+
+        private int numberOfIterations = 0;
+        private double maturity;
+        private double spot;
+        private double strike;
+        private double volatility;
+
+        public AtomicBoolean getShouldStop() {
+            return shouldStop;
+        }
+
+        public void stop() {
+            this.shouldStop.set(true);
+        }
+
+        private AtomicBoolean shouldStop = new AtomicBoolean(false);
+
+        public double getBestPremiumsComputed() {
+            return bestPremiumsComputed;
+        }
+
+        private double bestPremiumsComputed = 0;
+
+        public MonoIterRunnable(double maturity, double spot, double strike, double volatility) {
+            this.maturity = maturity;
+            this.spot = spot;
+            this.strike = strike;
+            this.volatility = volatility;
+        }
+
+        @Override
+            public void run() {
+                while (!shouldStop.get()) {
+                    double gaussian = StdRandom.gaussian();
+                    double priceComputed = computeMonteCarloIteration(spot,
+                           interestRate, volatility, gaussian, maturity);
+                    double bestPremium = computePremiumForMonteCarloIteration(
+                          priceComputed, strike);
+                    bestPremiumsComputed += bestPremium;
+                    numberOfIterations++;
+                }
+            }
+
+
+    }
 
 
     @Autowired
@@ -32,29 +83,27 @@ public class MonoThreadedMonteCarlo implements PricingService {
                                  double volatility) {
 
 
-        double bestPremiumsComputed = 0;
-        long timeToStop = System.currentTimeMillis() + delayToStop;
-
         maturity /= 360.0;
-        int numberOfIterations = 0;
-        while (System.currentTimeMillis() < timeToStop) {
-            double gaussian = StdRandom.gaussian();
-            double priceComputed = computeMonteCarloIteration(spot,
-                    interestRate, volatility, gaussian, maturity);
-            double bestPremium = computePremiumForMonteCarloIteration(
-                    priceComputed, strike);
-            bestPremiumsComputed += bestPremium;
-            numberOfIterations++;
+
+        MonoIterRunnable target = new MonoIterRunnable(maturity, spot, strike, volatility);
+        new Thread(target).start();
+
+        try {
+            Thread.sleep(delayToStop);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
+        target.stop();
+
         // Compute mean
-        double meanOfPremiums = bestPremiumsComputed / numberOfIterations;
+        double meanOfPremiums = target.getBestPremiumsComputed() / target.getNumberOfIterations();
 
         // Discount the expected payoff at risk free interest rate
         double pricedValue = Math.exp(-interestRate * maturity)
                 * meanOfPremiums;
 
-        resultLogger.write(numberOfIterations);
+        resultLogger.write(target.getNumberOfIterations());
         return pricedValue;
     }
 

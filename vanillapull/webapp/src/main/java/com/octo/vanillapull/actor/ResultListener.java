@@ -1,12 +1,10 @@
 package com.octo.vanillapull.actor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-
 import com.octo.vanillapull.service.synchronization.AkkaMonteCarlo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ResultListener extends UntypedActor {
 

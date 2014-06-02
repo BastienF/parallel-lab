@@ -27,3 +27,6 @@ AutoEnvOracle7/tmp/
 *.pem
 
 AutoEnvOracle7/test.yml
+launcherApp
+provisioning/yjp*
+AutoEnvOracle7/provisioning/yjp-2013-build-13080/

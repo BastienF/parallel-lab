@@ -1,11 +1,23 @@
 package com.octo.vanillapull.actor;
 
-public class NoSyncWork extends AWork {
-	long timeToStop;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-	public NoSyncWork(long timeToStop, double maturity, double spot,
+public class NoSyncWork extends AWork {
+
+
+    private AtomicBoolean shouldStop = new AtomicBoolean(false);
+
+
+    public boolean getShouldStop() {
+        return shouldStop.get();
+    }
+
+    public void stop() {
+        shouldStop.set(true);
+    }
+
+	public NoSyncWork(double maturity, double spot,
                       double strike, double volatility) {
-		this.timeToStop = timeToStop;
 		this.maturity = maturity;
 		this.spot = spot;
 		this.strike = strike;

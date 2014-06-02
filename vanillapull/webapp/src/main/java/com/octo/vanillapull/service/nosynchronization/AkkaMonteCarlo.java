@@ -71,7 +71,7 @@ public class AkkaMonteCarlo implements PricingService {
 			double strike, double volatility) {
 
 		// start the calculation
-        NoSyncWork work = new NoSyncWork(System.currentTimeMillis() + delayToStop, maturity, spot, strike,
+        NoSyncWork work = new NoSyncWork(maturity, spot, strike,
 				volatility);
 
 		// Creating agregator - use to aggregate result from master
@@ -88,6 +88,12 @@ public class AkkaMonteCarlo implements PricingService {
 
 		Timeout timeout = new Timeout(Duration.create(60, "seconds"));
 		Future<Object> future = ask(agregator, work, timeout);
+        try {
+            Thread.sleep(delayToStop);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        work.stop();
 
 		double bestPremiumsComputed = 0;
         int numberOfIterations = 0;

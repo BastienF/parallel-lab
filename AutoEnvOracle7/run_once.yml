@@ -48,7 +48,7 @@
       sudo: true
 
     - name: startup httpcore
-      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java {{full_params}} -DwriterPath={{ webappWriterPath }}" 1>std.log 2>err.log
+      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp exec:java {{full_params}} -DwriterPath={{ webappWriterPath }}" 1>std.log 2>err.log
       async: 1000000000000000000
       poll: 0
 
