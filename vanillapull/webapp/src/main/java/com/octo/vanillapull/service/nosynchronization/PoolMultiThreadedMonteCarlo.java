@@ -82,7 +82,8 @@ public class PoolMultiThreadedMonteCarlo  extends BaseThreadedMonteCarlo {
 
 	@PostConstruct
 	public void init() throws Exception {
-		pool = new ForkJoinPool();
+        boolean asyncMode = Boolean.getBoolean("asyncMode");
+		pool = new ForkJoinPool(processors, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, asyncMode);
 	}
 
 	@PreDestroy
