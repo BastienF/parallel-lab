@@ -9,8 +9,5 @@
                 "namePrefix": "vanillapull"
             }
         }
-    ],
-      "queryIntervalInSeconds": 10,
-      "numQueryThreads": 1,
-      "exportIntervalInSeconds": 10
+    ]
 }

@@ -2,6 +2,8 @@ package com.octo.vanillapull.service.synchronization;
 
 import com.octo.vanillapull.service.PricingService;
 import com.octo.vanillapull.util.StdRandom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ import java.util.concurrent.ForkJoinTask;
 @Profile("pool")
 @Service
 public class PoolMultiThreadedMonteCarlo implements PricingService {
+    public final static Logger logger = LoggerFactory.getLogger(PoolMultiThreadedMonteCarlo.class);
 
 	private class MonteCarloTask extends ForkJoinTask<Double> {
 
@@ -86,7 +89,7 @@ public class PoolMultiThreadedMonteCarlo implements PricingService {
 
 		MonteCarloTask[] tasks = new MonteCarloTask[processors];
 		for (int i = 0; i < processors; i++) {
-			MonteCarloTask task = new MonteCarloTask(nbPerThreads, maturity,
+			MonteCarloTask task = new MonteCarloTask(nbPerThreads + (4 - i) * 250000, maturity,
 					spot, strike, volatility);
 			pool.execute(task);
 			tasks[i] = task;

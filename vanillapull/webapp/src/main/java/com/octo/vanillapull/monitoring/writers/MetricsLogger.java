@@ -41,7 +41,7 @@ public class MetricsLogger extends AMonteCarloLogger {
 
     @Scheduled(fixedDelay = 2000)
     public void write() {
-        String nbThreadValue = Integer.toString(Thread.getAllStackTraces().keySet().size());
+        String nbThreadValue = Integer.toString(ManagementFactory.getThreadMXBean().getThreadCount());
         OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
         String processCpuLoad = Long.toString(Math.round(osBean.getProcessCpuLoad() * 100));
 
