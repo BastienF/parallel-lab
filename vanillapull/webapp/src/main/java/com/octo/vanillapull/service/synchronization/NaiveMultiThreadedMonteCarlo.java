@@ -95,7 +95,7 @@ public class NaiveMultiThreadedMonteCarlo extends BaseThreadedMonteCarlo {
 	}
 
     @Override
-    public void init() throws Exception {
+    public void init() {
 
     }
 

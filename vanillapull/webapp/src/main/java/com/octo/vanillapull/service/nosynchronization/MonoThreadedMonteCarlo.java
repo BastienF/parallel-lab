@@ -106,7 +106,7 @@ public class MonoThreadedMonteCarlo  extends BaseThreadedMonteCarlo {
     }
 
     @PostConstruct
-    public void init() throws Exception {
+    public void init() {
     }
 
     public double computeMonteCarloIteration(double spot, double rate,

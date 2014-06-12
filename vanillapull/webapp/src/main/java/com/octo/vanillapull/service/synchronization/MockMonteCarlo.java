@@ -19,7 +19,7 @@ public class MockMonteCarlo implements PricingService {
     }
 
     @Override
-    public void init() throws Exception {
+    public void init() {
 
     }
 }

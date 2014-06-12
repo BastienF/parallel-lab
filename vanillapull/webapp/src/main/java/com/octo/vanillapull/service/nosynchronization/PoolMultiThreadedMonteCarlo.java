@@ -83,14 +83,14 @@ public class PoolMultiThreadedMonteCarlo  extends BaseThreadedMonteCarlo {
 	private ForkJoinPool pool;
 
 	@PostConstruct
-	public void init() throws Exception {
+	public void init() {
         boolean asyncMode = Boolean.getBoolean("asyncMode");
 		pool = new ForkJoinPool(processors, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, asyncMode);
         logger.info("Launch pool with parallelism {} and async mode {}", pool.getParallelism(), pool.getAsyncMode());
 	}
 
 	@PreDestroy
-	public void cleanUp() throws Exception {
+	public void cleanUp() {
 		pool.shutdown();
 	}
 

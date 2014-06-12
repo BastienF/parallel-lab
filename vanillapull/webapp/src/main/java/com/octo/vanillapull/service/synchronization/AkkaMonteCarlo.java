@@ -49,7 +49,7 @@ public class AkkaMonteCarlo extends BaseThreadedMonteCarlo {
 	}
 
 	@PreDestroy
-	public void cleanUp() throws Exception {
+	public void cleanUp() {
 		system.shutdown();
 	}
 

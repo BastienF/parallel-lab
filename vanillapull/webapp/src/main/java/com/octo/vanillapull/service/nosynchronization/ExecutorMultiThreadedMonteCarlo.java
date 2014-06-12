@@ -67,12 +67,12 @@ public class ExecutorMultiThreadedMonteCarlo  extends BaseThreadedMonteCarlo {
 	private ExecutorService pool;
 
 	@PostConstruct
-	public void init() throws Exception {
+	public void init() {
 		pool = Executors.newFixedThreadPool(processors);
 	}
 
 	@PreDestroy
-	public void cleanUp() throws Exception {
+	public void cleanUp() {
 		pool.shutdown();
 	}
 
