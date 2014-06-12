@@ -22,7 +22,7 @@ import java.util.concurrent.ForkJoinTask;
 @Service
 public class PoolMultiThreadedMonteCarlo extends BaseThreadedMonteCarlo {
 
-    public final static Logger logger = LoggerFactory.getLogger(PoolMultiThreadedMonteCarlo.class);
+    private final static Logger logger = LoggerFactory.getLogger(PoolMultiThreadedMonteCarlo.class);
 
 	private class MonteCarloTask extends ForkJoinTask<Double> {
 
@@ -69,6 +69,7 @@ public class PoolMultiThreadedMonteCarlo extends BaseThreadedMonteCarlo {
 	public void init() throws Exception {
         boolean asyncMode = Boolean.getBoolean("asyncMode");
         pool = new ForkJoinPool(processors, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, asyncMode);
+        logger.info("Launch pool with parallelism {} and async mode {}", pool.getParallelism(), pool.getAsyncMode());
 	}
 
 	@PreDestroy
