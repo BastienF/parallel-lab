@@ -7,7 +7,7 @@
     vanillapull_dest_path: "{{ distant_home }}/parallel-lab/vanillapull/"
     to_bring_back: "{{ distant_home }}/toBringBack"
     webappWriterPath: "{{ to_bring_back }}/threadCount.json"
-    full_params: "-Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} -Dduration={{ duration }} -Dwarmup=true -DsynchronizationMode={{ synchronizationMode }} -DnoSynchronization_delay={{ noSynchronization_delay }}  -Dserver={{ server }} -Daws={{ aws }} -Dlanguage={{ language }} -XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog"
+    full_params: "-Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} -Dduration={{ duration }} -Dwarmup=true -DsynchronizationMode={{ synchronizationMode }} -DnoSynchronization_delay={{ noSynchronization_delay }}  -Dserver={{ server }} -Daws={{ aws }} -Dlanguage={{ language }} -XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -DpoolLogPath={{ poolLogPath }}"
   sudo: yes
   user: ${distant_user}
   tasks:

@@ -18,21 +18,23 @@ import static akka.pattern.Patterns.ask;
  */
 
 @Component
-public class LogWriter {
-    public final static Logger logger = LoggerFactory.getLogger(LogWriter.class);
+public class FJPoolBehaviorLogWriter {
+    public final static Logger logger = LoggerFactory.getLogger(FJPoolBehaviorLogWriter.class);
 
     private final ActorSystem system;
     private final ActorRef logWriterActor;
     private boolean started = false;
+    private final String logPath;
 
-    public LogWriter() {
+    public FJPoolBehaviorLogWriter() {
         String warmup = System.getProperty("warmup");
         if (warmup == null || !warmup.equals("true"))
             start();
+        logPath = System.getProperty("poolLogPath", "");
         system = ActorSystem.create("LoggerSystem");
         logWriterActor = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new LogWriterActor();
+                return new FJPoolBehaviorLogWriterActor();
             }
         }));
     }
@@ -42,12 +44,12 @@ public class LogWriter {
     }
 
     public void log(String message) {
-        if (started)
+        if (started && !logPath.isEmpty())
             ask(logWriterActor, message, new Timeout(Duration.create(60, "seconds")));
     }
 
     public void flush() {
-        if (started)
+        if (started && !logPath.isEmpty())
             ask(logWriterActor, "stop", new Timeout(Duration.create(60, "seconds")));
     }
 
@@ -55,12 +57,12 @@ public class LogWriter {
         started = true;
     }
 
-    private class LogWriterActor extends UntypedActor {
+    private class FJPoolBehaviorLogWriterActor extends UntypedActor {
         private BufferedWriter file;
 
-        public LogWriterActor() {
+        public FJPoolBehaviorLogWriterActor() {
             try {
-                file = new BufferedWriter(new FileWriter(System.getProperty("writerPath")));
+                file = new BufferedWriter(new FileWriter(logPath));
             } catch (IOException e) {
                 logger.error("Can't open log file : " + e.getMessage());
             }

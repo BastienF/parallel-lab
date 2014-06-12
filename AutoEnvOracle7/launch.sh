@@ -2,6 +2,8 @@
 
 date=`date +%s`
 
+poolLogPath=""
+
 while [ $# -gt 0 ]
 do
     case "$1" in
@@ -9,8 +11,9 @@ do
   --server) server="$2"; shift;;
   --nbThreads) nbThreads="$2"; shift;;
   --use-aws) aws=true;;
+  --poolLogPath) poolLogPath="$2"; shift;;
   -*) echo >&2 \
-      "wrong var: usage: $0 --scenario scenario [--server server] [--nbThreads nbThreads] [--use-aws]"
+      "wrong var: usage: $0 --scenario scenario [--server server] [--nbThreads nbThreads] [--use-aws] [--poolLogPath poolLogPath]"
       exit 1;;
   *)  break;; # terminate while loop
     esac
@@ -19,7 +22,7 @@ done
 
 if [ -z "$scenario" ]; then
   echo >&2 \
-      "not enougth vars: usage: $0 --scenario scenario [--server server] [--nbThreads nbThreads] [--use-aws]"
+      "not enougth vars: usage: $0 --scenario scenario [--server server] [--nbThreads nbThreads] [--use-aws] [--poolLogPath poolLogPath]"
   exit 1
 fi
 
@@ -58,7 +61,7 @@ if [ "$aws" = true ] ; then
     launchDate="AWS-$launchDate"
 fi
 
-static_param='launchDate='$launchDate' server='$server' scenario='$scenario' distant_user='$distant_user' aws='$aws' language='$LANGUAGE' nbThreads='$nbThreads
+static_param='launchDate='$launchDate' server='$server' scenario='$scenario' distant_user='$distant_user' aws='$aws' language='$LANGUAGE' nbThreads='$nbThreads' poolLogPath='$poolLogPath
 
 echo "Server setted at" $server
 ansible-playbook -i $HOSTS -l $VM_SERVER deploy_webapp.yml --private-key=$PKEY --extra-vars "$static_param"
@@ -115,4 +118,5 @@ if [ "$aws" = true ] ; then
   echo "Don't forget to run \`cat tmp/stopAwsCommand\` to shutdown AWS"
 else
   vagrant halt >> vagrant.log;
+  a=3;
 fi

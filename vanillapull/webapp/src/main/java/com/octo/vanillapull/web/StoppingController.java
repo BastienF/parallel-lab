@@ -1,5 +1,6 @@
 package com.octo.vanillapull.web;
 
+import com.octo.vanillapull.monitoring.writers.FJPoolBehaviorLogWriter;
 import com.octo.vanillapull.monitoring.writers.LogWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +22,15 @@ public class StoppingController {
     @Autowired
     private LogWriter writerActor;
 
+    @Autowired
+    private FJPoolBehaviorLogWriter fjPoolBehaviorLogWriter;
+
     @RequestMapping(value = "/stop", method = RequestMethod.GET, produces = "application/json")
     public
     @ResponseBody
     double stop() {
         writerActor.flush();
+        fjPoolBehaviorLogWriter.flush();
         return 0;
     }
 
@@ -34,6 +39,7 @@ public class StoppingController {
     @ResponseBody
     double start() {
         writerActor.start();
+        fjPoolBehaviorLogWriter.start();
         return 0;
     }
 }
