@@ -7,6 +7,7 @@ import com.octo.vanillapull.actor.NoSyncWork;
 import com.octo.vanillapull.actor.Result;
 import com.octo.vanillapull.actor.ResultListener;
 import com.octo.vanillapull.monitoring.writers.NoSyncResultLogger;
+import com.octo.vanillapull.service.BaseThreadedMonteCarlo;
 import com.octo.vanillapull.service.PricingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,21 +29,14 @@ import static akka.pattern.Patterns.ask;
  */
 @Profile("akkaNoSync")
 @Service
-public class AkkaMonteCarlo implements PricingService {
+public class AkkaMonteCarlo  extends BaseThreadedMonteCarlo {
 	
 	public final static Logger logger = LoggerFactory.getLogger(AkkaMonteCarlo.class);
-
-
 
     @Autowired
     private NoSyncResultLogger resultLogger;
 
     long delayToStop = Long.valueOf(System.getProperty("noSynchronization_delay"));
-
-	public static final int processors = Runtime.getRuntime()
-			.availableProcessors();
-	@Value("${interestRate}")
-	double interestRate;
 
 	int nb = 0;
 	ActorSystem system;

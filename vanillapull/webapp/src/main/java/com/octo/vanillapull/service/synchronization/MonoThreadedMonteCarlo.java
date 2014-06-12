@@ -1,5 +1,6 @@
 package com.octo.vanillapull.service.synchronization;
 
+import com.octo.vanillapull.service.BaseThreadedMonteCarlo;
 import com.octo.vanillapull.service.PricingService;
 import com.octo.vanillapull.util.StdRandom;
 import org.slf4j.Logger;
@@ -15,13 +16,9 @@ import javax.annotation.PostConstruct;
  */
 @Profile("mono")
 @Service
-public class MonoThreadedMonteCarlo implements PricingService {
+public class MonoThreadedMonteCarlo extends BaseThreadedMonteCarlo {
+
     public final static Logger logger = LoggerFactory.getLogger(MonoThreadedMonteCarlo.class);
-
-
-    long numberOfIterations = Integer.getInteger("iterations", 0);
-	@Value("${interestRate}")
-	double interestRate;
 
 	@Override
 	public double calculatePrice(double maturity, double spot, double strike,

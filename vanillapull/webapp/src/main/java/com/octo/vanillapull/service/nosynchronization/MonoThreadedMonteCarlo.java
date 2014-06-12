@@ -1,6 +1,7 @@
 package com.octo.vanillapull.service.nosynchronization;
 
 import com.octo.vanillapull.monitoring.writers.NoSyncResultLogger;
+import com.octo.vanillapull.service.BaseThreadedMonteCarlo;
 import com.octo.vanillapull.service.PricingService;
 import com.octo.vanillapull.util.StdRandom;
 import org.slf4j.Logger;
@@ -18,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Profile("monoNoSync")
 @Service
-public class MonoThreadedMonteCarlo implements PricingService {
+public class MonoThreadedMonteCarlo  extends BaseThreadedMonteCarlo {
     public final static Logger logger = LoggerFactory.getLogger(MonoThreadedMonteCarlo.class);
 
     private class MonoIterRunnable implements Runnable {
@@ -71,12 +72,9 @@ public class MonoThreadedMonteCarlo implements PricingService {
 
     }
 
-
     @Autowired
     private NoSyncResultLogger resultLogger;
     long delayToStop = Long.valueOf(System.getProperty("noSynchronization_delay"));
-    @Value("${interestRate}")
-    double interestRate;
 
     @Override
     public double calculatePrice(double maturity, double spot, double strike,

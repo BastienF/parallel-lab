@@ -1,5 +1,6 @@
 package com.octo.vanillapull.service.synchronization;
 
+import com.octo.vanillapull.service.BaseThreadedMonteCarlo;
 import com.octo.vanillapull.service.PricingService;
 import com.octo.vanillapull.util.StdRandom;
 import org.slf4j.Logger;
@@ -19,7 +20,8 @@ import java.util.concurrent.ForkJoinTask;
  */
 @Profile("pool")
 @Service
-public class PoolMultiThreadedMonteCarlo implements PricingService {
+public class PoolMultiThreadedMonteCarlo extends BaseThreadedMonteCarlo {
+
     public final static Logger logger = LoggerFactory.getLogger(PoolMultiThreadedMonteCarlo.class);
 
 	private class MonteCarloTask extends ForkJoinTask<Double> {
@@ -61,12 +63,6 @@ public class PoolMultiThreadedMonteCarlo implements PricingService {
 		}
 	}
 
-
-    long numberOfIterations = Integer.getInteger("iterations", 0);
-	@Value("${interestRate}")
-	double interestRate;
-
-	private final int processors = Runtime.getRuntime().availableProcessors();
 	private ForkJoinPool pool;
 
 	@PostConstruct
@@ -85,7 +81,7 @@ public class PoolMultiThreadedMonteCarlo implements PricingService {
 
 		maturity /= 360.0;
 
-		long nbPerThreads = numberOfIterations / processors;
+		int nbPerThreads = numberOfIterations / processors;
 
 		MonteCarloTask[] tasks = new MonteCarloTask[processors];
 		for (int i = 0; i < processors; i++) {

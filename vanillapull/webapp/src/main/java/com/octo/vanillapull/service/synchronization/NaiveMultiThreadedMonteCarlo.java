@@ -1,5 +1,6 @@
 package com.octo.vanillapull.service.synchronization;
 
+import com.octo.vanillapull.service.BaseThreadedMonteCarlo;
 import com.octo.vanillapull.service.PricingService;
 import com.octo.vanillapull.util.StdRandom;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +14,7 @@ import java.util.concurrent.CountDownLatch;
  */
 @Profile("naive")
 @Service
-public class NaiveMultiThreadedMonteCarlo implements PricingService {
+public class NaiveMultiThreadedMonteCarlo extends BaseThreadedMonteCarlo {
 
 	private class MonteCarloThread extends Thread {
 
@@ -47,13 +48,6 @@ public class NaiveMultiThreadedMonteCarlo implements PricingService {
 			latch.countDown();
 		}
 	}
-
-
-    long numberOfIterations = Integer.getInteger("iterations", 0);
-	@Value("${interestRate}")
-	double interestRate;
-
-	private final int processors = Runtime.getRuntime().availableProcessors();
 
 	@Override
 	public double calculatePrice(double maturity, double spot, double strike,
