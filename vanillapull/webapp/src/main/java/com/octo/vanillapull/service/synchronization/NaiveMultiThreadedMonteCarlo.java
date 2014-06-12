@@ -55,7 +55,7 @@ public class NaiveMultiThreadedMonteCarlo extends BaseThreadedMonteCarlo {
 
 		maturity /= 360.0;
 
-		long nbPerThreads = numberOfIterations / processors;
+		long nbPerThreads = getNbThreads();
 
 		CountDownLatch latch = new CountDownLatch(processors);
 

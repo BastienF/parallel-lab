@@ -13,4 +13,12 @@ public abstract class BaseThreadedMonteCarlo implements PricingService {
 
     @Value("${interestRate}")
     public double interestRate;
+
+    protected int getNbThreads() {
+        int result = numberOfIterations / processors;
+        if(result * processors != numberOfIterations) {
+            throw new IllegalArgumentException(numberOfIterations + " can't be divided by " + processors);
+        }
+        return result;
+    }
 }

@@ -81,7 +81,7 @@ public class PoolMultiThreadedMonteCarlo extends BaseThreadedMonteCarlo {
 
 		maturity /= 360.0;
 
-		int nbPerThreads = numberOfIterations / processors;
+		int nbPerThreads = getNbThreads();
 
 		MonteCarloTask[] tasks = new MonteCarloTask[processors];
 		for (int i = 0; i < processors; i++) {

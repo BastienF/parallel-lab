@@ -65,7 +65,7 @@ public class ExecutorMultiThreadedMonteCarlo extends BaseThreadedMonteCarlo {
 
 		maturity /= 360.0;
 
-		int nbPerThreads = numberOfIterations / processors;
+		int nbPerThreads = getNbThreads();
 
 		@SuppressWarnings("unchecked")
 		Future<Double>[] tasks = new Future[processors];
