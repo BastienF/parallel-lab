@@ -62,7 +62,7 @@ public class PoolMultiThreadedMonteCarlo implements PricingService {
 	}
 
 
-    long numberOfIterations = Integer.valueOf(System.getProperty("iterations"));
+    long numberOfIterations = Integer.getInteger("iterations", 0);
 	@Value("${interestRate}")
 	double interestRate;
 
@@ -89,7 +89,7 @@ public class PoolMultiThreadedMonteCarlo implements PricingService {
 
 		MonteCarloTask[] tasks = new MonteCarloTask[processors];
 		for (int i = 0; i < processors; i++) {
-			MonteCarloTask task = new MonteCarloTask(nbPerThreads + (4 - i) * 250000, maturity,
+			MonteCarloTask task = new MonteCarloTask(nbPerThreads, maturity,
 					spot, strike, volatility);
 			pool.execute(task);
 			tasks[i] = task;

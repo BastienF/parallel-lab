@@ -19,7 +19,7 @@ public class MonoThreadedMonteCarlo implements PricingService {
     public final static Logger logger = LoggerFactory.getLogger(MonoThreadedMonteCarlo.class);
 
 
-    long numberOfIterations = Integer.valueOf(System.getProperty("iterations"));
+    long numberOfIterations = Integer.getInteger("iterations", 0);
 	@Value("${interestRate}")
 	double interestRate;
 

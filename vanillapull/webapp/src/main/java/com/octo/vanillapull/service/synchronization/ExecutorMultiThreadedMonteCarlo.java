@@ -46,7 +46,7 @@ public class ExecutorMultiThreadedMonteCarlo implements PricingService {
 		}
 	}
 
-	long numberOfIterations = Integer.valueOf(System.getProperty("iterations"));
+	long numberOfIterations = Integer.getInteger("iterations", 0);
 	@Value("${interestRate}")
 	double interestRate;
 

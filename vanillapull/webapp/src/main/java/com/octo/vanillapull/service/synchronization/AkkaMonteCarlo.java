@@ -33,7 +33,7 @@ public class AkkaMonteCarlo implements PricingService {
 
 	public static final int processors = Runtime.getRuntime()
 			.availableProcessors();
-    int numberOfIterations = Integer.valueOf(System.getProperty("iterations"));;
+    int numberOfIterations = Integer.getInteger("iterations", 0);
 	@Value("${interestRate}")
 	double interestRate;
 

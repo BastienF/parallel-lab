@@ -10,6 +10,7 @@ import scala.concurrent.duration.Duration;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import static akka.pattern.Patterns.ask;
 
@@ -23,6 +24,9 @@ public class LogWriter {
 
     private final ActorSystem system;
     private final ActorRef logWriterActor;
+
+    private String writerPath = System.getProperty("writerPath", Paths.get("target", "out.log").toFile().getAbsolutePath());
+
     private boolean started = false;
 
     public LogWriter() {
@@ -57,7 +61,7 @@ public class LogWriter {
 
         public LogWriterActor() {
             try {
-                file = new BufferedWriter(new FileWriter(System.getProperty("writerPath")));
+                file = new BufferedWriter(new FileWriter(writerPath));
             } catch (IOException e) {
                 logger.error("Can't open log file : " + e.getMessage());
             }
