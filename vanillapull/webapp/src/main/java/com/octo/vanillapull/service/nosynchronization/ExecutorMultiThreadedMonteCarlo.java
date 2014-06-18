@@ -1,6 +1,7 @@
 package com.octo.vanillapull.service.nosynchronization;
 
 import com.octo.vanillapull.monitoring.writers.NoSyncResultLogger;
+import com.octo.vanillapull.service.BaseThreadedMonteCarlo;
 import com.octo.vanillapull.service.PricingService;
 import com.octo.vanillapull.util.StdRandom;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Profile("executorNoSync")
 @Service
-public class ExecutorMultiThreadedMonteCarlo implements PricingService {
+public class ExecutorMultiThreadedMonteCarlo  extends BaseThreadedMonteCarlo {
 
 	private class MonteCarloTask implements Callable<Double> {
 
@@ -62,19 +63,16 @@ public class ExecutorMultiThreadedMonteCarlo implements PricingService {
     private NoSyncResultLogger resultLogger;
 
 	long delayToStop = Long.valueOf(System.getProperty("noSynchronization_delay"));
-	@Value("${interestRate}")
-	double interestRate;
 
-	private final int processors = Runtime.getRuntime().availableProcessors();
 	private ExecutorService pool;
 
 	@PostConstruct
-	public void init() throws Exception {
+	public void init() {
 		pool = Executors.newFixedThreadPool(processors);
 	}
 
 	@PreDestroy
-	public void cleanUp() throws Exception {
+	public void cleanUp() {
 		pool.shutdown();
 	}
 

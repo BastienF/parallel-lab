@@ -107,8 +107,8 @@
     - name: agregate reports 2.3
       synchronize: mode=pull src={{ webappLogGCPath }} dest={{ results_dest_path }}/log_gc_{{ launchDate }}/
       sudo: true
-#    - name: clean reports 2
-#      fetch: src={{ distant_home }}/datalog-{{ launchDate }}.json dest={{ results_dest_path }}/datalog-{{ launchDate }}.json flat=yes
+    - name: clean reports 2
+      fetch: src={{ distant_home }}/datalog-{{ launchDate }}.json dest={{ results_dest_path }}/datalog-{{ launchDate }}.json flat=yes
     - name: clean reports 2.1
       fetch: src={{ distant_home }}/gatlingResult-{{ launchDate }}.csv dest={{ results_dest_path }}/datalog-{{ launchDate }}.csv flat=yes
     - name: clean reports 4

@@ -1,5 +1,6 @@
 package com.octo.vanillapull.service.synchronization;
 
+import com.octo.vanillapull.service.BaseThreadedMonteCarlo;
 import com.octo.vanillapull.service.PricingService;
 import com.octo.vanillapull.util.StdRandom;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,15 +16,15 @@ import java.util.concurrent.*;
  */
 @Profile("executor")
 @Service
-public class ExecutorMultiThreadedMonteCarlo implements PricingService {
+public class ExecutorMultiThreadedMonteCarlo extends BaseThreadedMonteCarlo {
 
 	private class MonteCarloTask implements Callable<Double> {
 
-		private final long nbIterations;
+		private final int nbIterations;
 		private double maturity, spot, strike, volatility;
 		double bestPremiumsComputed = 0;
 
-		public MonteCarloTask(long nbIterations, double maturity, double spot,
+		public MonteCarloTask(int nbIterations, double maturity, double spot,
 				double strike, double volatility) {
 			this.nbIterations = nbIterations;
 			this.maturity = maturity;
@@ -46,20 +47,15 @@ public class ExecutorMultiThreadedMonteCarlo implements PricingService {
 		}
 	}
 
-	long numberOfIterations = Integer.valueOf(System.getProperty("iterations"));
-	@Value("${interestRate}")
-	double interestRate;
-
-	private final int processors = Runtime.getRuntime().availableProcessors();
-	private ExecutorService pool;
+    private ExecutorService pool;
 
 	@PostConstruct
-	public void init() throws Exception {
+	public void init() {
 		pool = Executors.newFixedThreadPool(processors);
 	}
 
 	@PreDestroy
-	public void cleanUp() throws Exception {
+	public void cleanUp() {
 		pool.shutdown();
 	}
 
@@ -69,7 +65,7 @@ public class ExecutorMultiThreadedMonteCarlo implements PricingService {
 
 		maturity /= 360.0;
 
-		long nbPerThreads = numberOfIterations / processors;
+		int nbPerThreads = getNbThreads();
 
 		@SuppressWarnings("unchecked")
 		Future<Double>[] tasks = new Future[processors];

@@ -10,6 +10,7 @@ import scala.concurrent.duration.Duration;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import static akka.pattern.Patterns.ask;
 
@@ -23,6 +24,9 @@ public class LogWriter {
 
     private final ActorSystem system;
     private final ActorRef logWriterActor;
+
+    private String writerPath = System.getProperty("writerPath", Paths.get("target", "out.json").toFile().getAbsolutePath());
+
     private boolean started = false;
 
     public LogWriter() {
@@ -57,13 +61,10 @@ public class LogWriter {
 
     private class LogWriterActor extends UntypedActor {
         private BufferedWriter file;
+        private final StringBuilder log = new StringBuilder();
 
         public LogWriterActor() {
-            try {
-                file = new BufferedWriter(new FileWriter(System.getProperty("writerPath")));
-            } catch (IOException e) {
-                logger.error("Can't open log file : " + e.getMessage());
-            }
+
         }
 
         public void onReceive(Object message) {
@@ -71,21 +72,20 @@ public class LogWriter {
                 String str = (String) message;
                 if (str.equals("stop")) {
                     try {
+                        file = new BufferedWriter(new FileWriter(writerPath));
+                    } catch (IOException e) {
+                        logger.error("Can't open log file : " + e.getMessage());
+                        throw new RuntimeException(e);
+                    }
+                    try {
+                        file.write(log.toString());
                         file.flush();
-                    } catch (IOException e) {
-                        logger.warn("Can't flush log file" + e.getMessage());
-                    }
-                    try {
                         file.close();
-                    } catch (IOException e) {
-                        logger.warn("Can't close log file" + e.getMessage());
-                    }
-                } else {
-                    try {
-                        file.write(str);
                     } catch (IOException e) {
                         logger.warn("Can't write to log file" + e.getMessage());
                     }
+                } else {
+                    log.append(str);
                 }
             }
         }

@@ -1,8 +1,11 @@
 package com.octo.vanillapull.service.nosynchronization;
 
 import com.octo.vanillapull.monitoring.writers.NoSyncResultLogger;
+import com.octo.vanillapull.service.BaseThreadedMonteCarlo;
 import com.octo.vanillapull.service.PricingService;
 import com.octo.vanillapull.util.StdRandom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -20,7 +23,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Profile("poolNoSync")
 @Service
-public class PoolMultiThreadedMonteCarlo implements PricingService {
+public class PoolMultiThreadedMonteCarlo  extends BaseThreadedMonteCarlo {
+
+    private final static Logger logger = LoggerFactory.getLogger(PoolMultiThreadedMonteCarlo.class);
 
 	private class MonteCarloTask extends ForkJoinTask<Double> {
 
@@ -70,25 +75,22 @@ public class PoolMultiThreadedMonteCarlo implements PricingService {
 		}
 	}
 
-
-
     @Autowired
     private NoSyncResultLogger resultLogger;
 
     long delayToStop = Long.valueOf(System.getProperty("noSynchronization_delay"));
-	@Value("${interestRate}")
-	double interestRate;
 
-	private final int processors = Runtime.getRuntime().availableProcessors();
 	private ForkJoinPool pool;
 
 	@PostConstruct
-	public void init() throws Exception {
-		pool = new ForkJoinPool();
+	public void init() {
+        boolean asyncMode = Boolean.getBoolean("asyncMode");
+		pool = new ForkJoinPool(processors, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, asyncMode);
+        logger.info("Launch pool with parallelism {} and async mode {}", pool.getParallelism(), pool.getAsyncMode());
 	}
 
 	@PreDestroy
-	public void cleanUp() throws Exception {
+	public void cleanUp() {
 		pool.shutdown();
 	}
 

@@ -28,7 +28,7 @@ public class BSPricingService implements PricingService {
 	}
 
     @Override
-    public void init() throws Exception {
+    public void init() {
 
     }
 

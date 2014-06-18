@@ -2,14 +2,17 @@ package com.octo.vanillapull.monitoring.writers;
 
 import akka.actor.*;
 import akka.util.Timeout;
+import com.octo.vanillapull.monitoring.meters.ChronicleLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import scala.concurrent.duration.Duration;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.UUID;
 
 import static akka.pattern.Patterns.ask;
 
@@ -19,11 +22,14 @@ import static akka.pattern.Patterns.ask;
 
 @Component
 public class FJPoolBehaviorLogWriter {
+    @Autowired
+    ChronicleLogger chronicleLogger;
     public final static Logger logger = LoggerFactory.getLogger(FJPoolBehaviorLogWriter.class);
 
     private final ActorSystem system;
     private final ActorRef logWriterActor;
     private boolean started = false;
+    private boolean logActived = true;
     private final String logPath;
 
     public FJPoolBehaviorLogWriter() {
@@ -31,6 +37,8 @@ public class FJPoolBehaviorLogWriter {
         if (warmup == null || !warmup.equals("true"))
             start();
         logPath = System.getProperty("poolLogPath", "");
+        if (logPath.isEmpty())
+            logActived = false;
         system = ActorSystem.create("LoggerSystem");
         logWriterActor = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
@@ -39,17 +47,21 @@ public class FJPoolBehaviorLogWriter {
         }));
     }
 
+    public boolean isLogActived () {
+        return logActived;
+    }
+
     public boolean isStarted() {
         return started;
     }
 
     public void log(String message) {
-        if (started && !logPath.isEmpty())
+        if (started && logActived)
             ask(logWriterActor, message, new Timeout(Duration.create(60, "seconds")));
     }
 
     public void flush() {
-        if (started && !logPath.isEmpty())
+        if (started && logActived)
             ask(logWriterActor, "stop", new Timeout(Duration.create(60, "seconds")));
     }
 
@@ -57,15 +69,14 @@ public class FJPoolBehaviorLogWriter {
         started = true;
     }
 
-    private class FJPoolBehaviorLogWriterActor extends UntypedActor {
+    private class FJPoolBehaviorLogWriterActor extends UntypedActor implements ChronicleLogger.ChronicleLoggable {
+
+
         private BufferedWriter file;
+        private final String uuid = UUID.randomUUID().toString();
 
         public FJPoolBehaviorLogWriterActor() {
-            try {
-                file = new BufferedWriter(new FileWriter(logPath));
-            } catch (IOException e) {
-                logger.error("Can't open log file : " + e.getMessage());
-            }
+
         }
 
         public void onReceive(Object message) {
@@ -73,23 +84,31 @@ public class FJPoolBehaviorLogWriter {
                 String str = (String) message;
                 if (str.equals("stop")) {
                     try {
-                        file.flush();
+                        file = new BufferedWriter(new FileWriter(logPath));
                     } catch (IOException e) {
-                        logger.warn("Can't flush log file" + e.getMessage());
+                        logger.error("Can't open log file : " + e.getMessage());
+                        throw new RuntimeException(e);
+
                     }
                     try {
+                        final String allEntries = chronicleLogger.getAllEntriesAndClose(this);
+                        file.write(allEntries);
+                        file.flush();
                         file.close();
                     } catch (IOException e) {
-                        logger.warn("Can't close log file" + e.getMessage());
+                        logger.warn("Can't write to log file" + e.getMessage());
+                        throw new RuntimeException(e);
                     }
                 } else {
-                    try {
-                        file.write(str);
-                    } catch (IOException e) {
-                        logger.warn("Can't write to log file" + e.getMessage());
-                    }
+                    logger.info("It LOG : " + str);
+                    chronicleLogger.logEntry(this, str);
                 }
             }
+        }
+
+        @Override
+        public String getChronicleName() {
+            return uuid;
         }
     }
 }

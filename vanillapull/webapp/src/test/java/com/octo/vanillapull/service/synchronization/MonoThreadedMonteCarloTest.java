@@ -1,5 +1,6 @@
 package com.octo.vanillapull.service.synchronization;
 
+import com.octo.vanillapull.service.BaseThreadedMonteCarlo;
 import com.octo.vanillapull.service.synchronization.MonoThreadedMonteCarlo;
 import org.junit.Test;
 
@@ -8,16 +9,10 @@ import static org.junit.Assert.*;
 /**
  * @author Henri Tremblay
  */
-public class MonoThreadedMonteCarloTest {
+public class MonoThreadedMonteCarloTest extends BaseMonteCarloTest {
 
-  @Test
-  public void testCalculatePrice() throws Exception {
-    MonoThreadedMonteCarlo c = new MonoThreadedMonteCarlo();
-    c.numberOfIterations = 1_000_000;
-    c.interestRate = 0.015;
-
-    // insert into INSTRUMENT(symbol, label, SPOT, VOLATILITY, VARIATION) values('BNP','BNP Paribas', 45.04, 1, 0.89);
-    double actual = 28.2;//c.calculatePrice(90, 45.04, 17, 1);
-    assertEquals(28.2, actual, 0.1);
-  }
+    @Override
+    protected BaseThreadedMonteCarlo getImplementation() {
+        return new MonoThreadedMonteCarlo();
+    }
 }

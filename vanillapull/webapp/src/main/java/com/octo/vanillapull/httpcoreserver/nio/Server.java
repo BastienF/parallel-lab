@@ -43,6 +43,9 @@ public class Server {
             case "pool" :
                 result = new PoolMultiThreadedMonteCarlo();
                 break;
+            case "fork" :
+                result = new ForkMultiThreadedMonteCarlo();
+                break;
             case "executor" :
                 result = new ExecutorMultiThreadedMonteCarlo();
                 break;

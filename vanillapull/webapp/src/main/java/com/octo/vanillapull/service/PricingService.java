@@ -9,6 +9,5 @@ public interface PricingService {
 	double calculatePrice(double maturity, double spot, double strike,
 			double volatility);
 
-    @PostConstruct
-    public void init() throws Exception;
+    public void init();
 }
