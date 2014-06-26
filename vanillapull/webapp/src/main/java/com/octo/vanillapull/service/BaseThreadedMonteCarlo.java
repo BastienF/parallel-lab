@@ -23,7 +23,6 @@ public abstract class BaseThreadedMonteCarlo implements PricingService {
 
     @Autowired
     public ChronicleLogger chronicleLogger;
-
     public int numberOfIterations = Integer.getInteger("iterations", 0);
 
     @Value("${interestRate}")

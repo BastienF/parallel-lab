@@ -185,4 +185,5 @@ public class ForkMultiThreadedMonteCarlo extends BaseThreadedMonteCarlo {
             double computedBestPrice, double strike) {
         return Math.max(computedBestPrice - strike, 0);
     }
+
 }

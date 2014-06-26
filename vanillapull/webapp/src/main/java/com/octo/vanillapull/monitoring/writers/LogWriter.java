@@ -64,7 +64,6 @@ public class LogWriter {
         private final StringBuilder log = new StringBuilder();
 
         public LogWriterActor() {
-
         }
 
         public void onReceive(Object message) {
