@@ -1,0 +1,327 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+		<title>Chronological Diagram of FJPool execution</title>
+		<script type="text/javascript" src="http://mbostock.github.com/d3/d3.v2.js"></script>
+		<script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
+		<style type="text/css">
+		.chart {
+			shape-rendering: crispEdges;
+		}
+
+		.mini text {
+			font: 9px sans-serif;	
+		}
+
+		.main text {
+			font: 12px sans-serif;	
+		}
+
+		.miniItem0 {
+			fill: darksalmon;
+			stroke-width: 6;	
+		}
+
+		.miniItem1 {
+			fill: darkolivegreen;
+			fill-opacity: .7;
+			stroke-width: 6;	
+		}
+
+		.miniItem2 {
+			fill: slategray;
+			fill-opacity: .7;
+			stroke-width: 6;	
+		}
+
+		.miniItem3 {
+			fill: darkmagenta;
+			fill-opacity: .7;
+			stroke-width: 6;	
+		}
+
+		.brush .extent {
+			stroke: gray;
+			fill: dodgerblue;
+			fill-opacity: .365;
+		}
+		</style>
+		<script type="text/javascript">
+		    function listAllReports() {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    reportsList = xhr.responseText;
+                    document.getElementById("report1").innerHTML = reportsList;
+                    document.getElementById("report2").innerHTML = reportsList;
+                } else {
+                    console.error(xhr);
+                }
+            }
+        };
+        xhr.open("GET", "http://localhost/cgi-bin/list_reports_html_options.sh", true);
+        xhr.send();
+    }
+
+    listAllReports();</script>
+	</head>
+	<body>
+
+                    <div id="father">
+        <div class="dotted">
+            <select id="report1">
+            </select>
+            <select id="report2">
+            </select>
+            <input type="button" name="bouton" value="Afficher" onClick="launch()">
+        </div>
+        <div class="dotted" id="container">
+        </div>
+    </div>
+
+		<script type="text/javascript">
+		//data
+ function launch() {
+
+var report1 = document.getElementById("report1");
+        var report1Value = report1.options[report1.selectedIndex].value;
+
+        function loadJSON(success, error, file) {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        if (success) {
+                            var jsonFile = xhr.responseText;
+                            debugger;
+                            if (jsonFile[0] != "[")
+                                jsonFile = ("[" + jsonFile.substring(0, jsonFile.length - 2) + "]");
+                            success(JSON.parse(jsonFile));
+                        }
+                    } else {
+                        if (error)
+                            error(xhr);
+                    }
+                }
+            };
+            xhr.open("GET", file, true);
+            xhr.send();
+        }
+
+        loadJSON(
+            function(data2) {
+                launchBuild(data2);
+                
+            },
+
+            function(xhr) {
+                console.error(xhr);
+            },
+
+            report1Value
+        );
+}
+function launchBuild(data) {
+	debugger;
+var lanes = _.sortBy(_.chain(data).map(function(elt) {
+            return elt.Th
+        }).uniq().value(), function(num){ return num; });
+var laneLength = lanes.length;
+var startTimes = _.reject(data, function(el) {
+                return el.S != "Start"
+            });
+var stopTimes = _.reject(data, function(el) {
+                return el.S != "Stop"
+            });
+			var timeBegin = 0;
+			var timeEnd = 0;
+var items = [];
+
+var firstTime = -1;
+_.each(startTimes, function(elt) {
+var startT = parseInt(elt.T);
+
+	 if (firstTime < 0 || firstTime > startT) {
+	 	firstTime = startT;
+	 }
+})
+
+_.each(startTimes, function(elt) {
+	 var singlStop = _.reject(stopTimes, function(el) {
+                return el.N != elt.N
+            });
+	 var stopT = parseInt(singlStop[0].T) - firstTime;
+	 if ( stopT > timeEnd) {
+	 	timeEnd = stopT;
+	 }
+
+	 var startT = parseInt(elt.T) - firstTime;
+
+                items.push({"lane": lanes.indexOf(elt.Th), "id": elt.N + " (" + startT + "-" + stopT + "ms)", "start": startT, "end": stopT, "color": elt.C});
+            })
+	timeEnd += timeEnd * 0.25;
+		var m = [40, 15, 15, 150]; //top right bottom left
+		var	w = 1600 - m[1] - m[3];
+		var	h = 768 - m[0] - m[2];
+		var	miniHeight = laneLength * 12 + 50;
+		var	mainHeight = h - miniHeight - 50;
+
+		//scales
+		var x = d3.scale.linear()
+				.domain([timeBegin, timeEnd])
+				.range([0, w]);
+		var x1 = d3.scale.linear()
+				.range([0, w]);
+		var y1 = d3.scale.linear()
+				.domain([0, laneLength])
+				.range([0, mainHeight]);
+		var y2 = d3.scale.linear()
+				.domain([0, laneLength])
+				.range([0, miniHeight]);
+
+		var chart = d3.select("body")
+					.append("svg")
+					.attr("width", w + m[1] + m[3])
+					.attr("height", h + m[0] + m[2])
+					.attr("class", "chart");
+		
+		chart.append("defs").append("clipPath")
+			.attr("id", "clip")
+			.append("rect")
+			.attr("width", w)
+			.attr("height", mainHeight);
+
+		var main = chart.append("g")
+					.attr("transform", "translate(" + m[3] + "," + m[0] + ")")
+					.attr("width", w)
+					.attr("height", mainHeight)
+					.attr("class", "main");
+
+		var mini = chart.append("g")
+					.attr("transform", "translate(" + m[3] + "," + (mainHeight + m[0]) + ")")
+					.attr("width", w)
+					.attr("height", miniHeight)
+					.attr("class", "mini");
+		
+		//main lanes and texts
+		main.append("g").selectAll(".laneLines")
+			.data(items)
+			.enter().append("line")
+			.attr("x1", m[1])
+			.attr("y1", function(d) {return y1(d.lane);})
+			.attr("x2", w)
+			.attr("y2", function(d) {return y1(d.lane);})
+			.attr("stroke", "lightgray")
+
+		main.append("g").selectAll(".laneText")
+			.data(lanes)
+			.enter().append("text")
+			.text(function(d) {return d;})
+			.attr("x", -m[1])
+			.attr("y", function(d, i) {return y1(i + .5);})
+			.attr("dy", ".5ex")
+			.attr("text-anchor", "end")
+			.attr("class", "laneText");
+		
+		//mini lanes and texts
+		mini.append("g").selectAll(".laneLines")
+			.data(items)
+			.enter().append("line")
+			.attr("x1", m[1])
+			.attr("y1", function(d) {return y2(d.lane);})
+			.attr("x2", w)
+			.attr("y2", function(d) {return y2(d.lane);})
+			.attr("stroke", "lightgray");
+
+		mini.append("g").selectAll(".laneText")
+			.data(lanes)
+			.enter().append("text")
+			.text(function(d) {return d;})
+			.attr("x", -m[1])
+			.attr("y", function(d, i) {return y2(i + .5);})
+			.attr("dy", ".5ex")
+			.attr("text-anchor", "end")
+			.attr("class", "laneText");
+
+		var itemRects = main.append("g")
+							.attr("clip-path", "url(#clip)");
+		
+		//mini item rects
+		mini.append("g").selectAll("miniItems")
+			.data(items)
+			.enter().append("rect")
+			.attr("x", function(d) {return x(d.start);})
+			.attr("fill", function(d) {return d.color})
+			.attr("y", function(d) {return y2(d.lane + .5) - 5;})
+			.attr("width", function(d) {return x(d.end - d.start);})
+			.attr("height", 10);
+
+		//mini labels
+		mini.append("g").selectAll(".miniLabels")
+			.data(items)
+			.enter().append("text")
+			.text(function(d) {return d.id;})
+			.attr("x", function(d) {return x(d.start);})
+			.attr("y", function(d) {return y2(d.lane + .5);})
+			.attr("dy", ".5ex");
+
+		//brush
+		var brush = d3.svg.brush()
+							.x(x)
+							.on("brush", display);
+
+		mini.append("g")
+			.attr("class", "x brush")
+			.call(brush)
+			.selectAll("rect")
+			.attr("y", 1)
+			.attr("height", miniHeight - 1);
+
+		display();
+		
+		function display() {
+			var rects, labels,
+				minExtent = brush.extent()[0],
+				maxExtent = brush.extent()[1],
+				visItems = items.filter(function(d) {return d.start < maxExtent && d.end > minExtent;});
+
+			mini.select(".brush")
+				.call(brush.extent([minExtent, maxExtent]));
+
+			x1.domain([minExtent, maxExtent]);
+
+			//update main item rects
+			rects = itemRects.selectAll("rect")
+			        .data(visItems, function(d) { return d.id; })
+				.attr("x", function(d) {return x1(d.start);})
+				.attr("width", function(d) {return x1(d.end) - x1(d.start);});
+			
+			rects.enter().append("rect")
+				.attr("fill", function(d) {return d.color;})
+				.attr("x", function(d) {return x1(d.start);})
+				.attr("y", function(d) {return y1(d.lane) + 10;})
+				.attr("width", function(d) {return x1(d.end) - x1(d.start);})
+				.attr("height", function(d) {return .8 * y1(1);});
+
+			rects.exit().remove();
+
+			//update the item labels
+			labels = itemRects.selectAll("text")
+				.data(visItems, function (d) { return d.id; })
+				.attr("x", function(d) {return x1(Math.max(d.start, minExtent) + 2);});
+
+			labels.enter().append("text")
+				.text(function(d) {return d.id;})
+				.attr("x", function(d) {return x1(Math.max(d.start, minExtent));})
+				.attr("y", function(d) {return y1(d.lane + .5);})
+				.attr("text-anchor", "start");
+
+			labels.exit().remove();
+
+		}
+	}
+		
+		</script>
+	</body>
+</html>

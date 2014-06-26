@@ -9,17 +9,17 @@ OUTPUT="$(date)"
   echo '<html><head><title>Parallel-Lab</title>
     <style type="text/css">
   a {
-    color: #00FF00;
+    color: #EEEEEE;
   }
   input, button, select, option {
   	background-color: #222222;
-  	color: #00FF00;
+  	color: #EEEEEE;
   	-moz-border-radius:5px;
 -webkit-border-radius:5px;-o-border-radius:5px;
 border-radius:5px;
   }
   .dotted {
-  	border-style:dashed; border-color:#00FF00; border-width:1px; padding:5px; margin:5px
+  	border-style:dashed; border-color:#EEEEEE; border-width:1px; padding:5px; margin:5px
   }
   </style>
   <script type="text/javascript">
@@ -89,7 +89,7 @@ function duplicateValue(idSuf) {
 }
   </script>
 
-  </head><body style="margin:0; padding:15px; color:#00FF00; background-color:black; font-family:Monospace; font-size:13px;">'
+  </head><body style="margin:0; padding:15px; color:#EEEEEE; background-color:black; font-family:Monospace; font-size:13px;">'
  echo "Today is $OUTPUT <br>"
  echo "Current directory is $(pwd) <br>"
  echo "Shell Script name is $0<br/>"

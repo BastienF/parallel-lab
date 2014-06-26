@@ -4,11 +4,11 @@
     <link rel="stylesheet" href="nv.d3.css" type="text/css" media="screen" />
     <style type="text/css">
     a {
-        color: #EEEEEE;
+        color: #00FF00;
     }
     input, button, select, option {
         background-color: #222222;
-        color: #EEEEEE;
+        color: #00FF00;
         -moz-border-radius:5px;
         -webkit-border-radius:5px;
         -o-border-radius:5px;
@@ -16,7 +16,7 @@
     }
     .dotted {
         border-style:dashed;
-        border-color:#EEEEEE;
+        border-color:#00FF00;
         border-width:1px;
         padding:5px;
         margin:5px
@@ -52,7 +52,7 @@
                 if (tab2 !== undefined) {
                 var value2 = parseInt(result2[impl + '-' + eltIter + '-' + elt].total);
                 var diff = (value2 - value1);
-                innerHTML += '<td>' + formatNumber(value1) + '/' + formatNumber(value2) + '<strong><span style="color:' + (diff >= 0 ? '#00CC00' : '#FF0000') + '; background-color:black; float:right">(' + parseInt(100 * diff/value1) + '%)</span><strong></td>';
+                innerHTML += '<td>' + formatNumber(value1) + '/' + formatNumber(value2) + '<strong><span style="color:' + (diff >= 0 ? '#00CC00' : '#FF0000') + '">(' + parseInt(100 * diff/value1) + '%)</span><strong></td>';
             } else {
                 alert("R2 : Iter: " + eltIter + "/Users: " + elt + " undefined for " + impl);
                 innerHTML += '<td>' + formatNumber(value1) + '/<strong><span style="color:red;">-' + '(-)</span></strong></td>';
@@ -65,82 +65,46 @@
         return innerHTML;
     }
 
-    function launchBuild(data2, data3) {
+    function launchBuild(data2) {
         rawdata = data2;
-        rawdata2 = data3;
         var container = document.getElementById("container");
         var report1 = document.getElementById("report1");
         var report2 = document.getElementById("report2");
         var report1Value = report1.options[report1.selectedIndex].innerHTML;
         var report2Value = report2.options[report2.selectedIndex].innerHTML;
         var innerHTML = '<div class="dotted">';
-        innerHTML += "<strong>Server</strong>: ";
-        if (report1Value.search(/tomcat/i) >= 0) {
-            if (report2Value.search(/tomcat/i) < 0) {
-                alert('Error : Servers differ');
-            }
-            innerHTML += "Tomcat";
-        } else if (report1Value.search(/jetty/i) >= 0) {
-            if (report2Value.search(/jetty/i) < 0) {
-                alert('Error : Servers differ');
-            }
-            innerHTML += "Jetty";
-        } else if (report1Value.search(/httpcore/i) >= 0) {
-            if (report2Value.search(/httpcore/i) < 0) {
-                alert('Error : Servers differ');
-            }
-            innerHTML += "Httpcore";
-        }
-
-        var re = /.+nbThreads([0-9]+).+/i;
-        innerHTML += '<br/><strong>R1</strong>: ' + report1Value;
-        innerHTML += '<br/><strong>R2</strong>: ' + report2Value;
-        var nbThreads = report1Value.replace(re, "$1");
-        innerHTML += '<br/><strong>Threads number R1</strong>: ' + nbThreads;
-        nbThreads = report2Value.replace(re, "$1");
-        innerHTML += '<br/><strong>Threads number R2</strong>: ' + nbThreads;
-        innerHTML += '<br/><br/>';
-        innerHTML += '</div>';
-
-        var distinctsIters = _.chain(rawdata).map(function(elt) {
-            return elt.Iterations
-        }).uniq().value();
-        var distinctsUsers = _.chain(rawdata).map(function(elt) {
-            return elt.Users
-        }).uniq().value();
-
-
 
         var result1 = _.groupBy(_.reject(data2, function(el) {
-            return el.t == "metric" || el.Status == "KO"
+            return el.t == "metric"
         }), function(el) {
             return el.Implementation + '-' + el.Iterations + '-' + el.Users
         })
 
-        var result2 = _.groupBy(_.reject(data3, function(el) {
-            return el.t == "metric" || el.Status == "KO"
-        }), function(el) {
-            return el.Implementation + '-' + el.Iterations + '-' + el.Users
-        })
-
+        var jsondisp = [];
 
         _.each(result1, function(list) {
-            list.total = _.reduce(list, function(acc, item) {
+            var item = {};
+            item.Implementation = list[0].Implementation;
+            item.Iterations = list[0].Iterations;
+            item.ResponseTime = _.reduce(list, function(acc, item) {
                 return acc + parseInt(item.ResponseTime)
             }, 0) / list.length
+            item.Duration = list[0].Duration;
+            item.Users = list[0].Users;
+            item.Serv = list[0].Serv;
+            item.AWS = list[0].AWS;
+            item.Lang = list[0].Lang;
+            item.NbT = list[0].NbT;
+            jsondisp.push(item);
         })
-        _.each(result2, function(list) {
-            list.total = _.reduce(list, function(acc, item) {
-                return acc + parseInt(item.ResponseTime)
-            }, 0) / list.length
-        })
-        innerHTML += '<table border="1">'
-        var impls = {"akka" : "#ff7f0e", "mono" : "#f07ffe", "naive" : "#0f7f0e", "executor" : "#007fff", "pool" : "#55ff55"};
-        for (var impl in impls) {
-            innerHTML += buildImplTable(distinctsIters, distinctsUsers, result1, result2, impl, impls[impl]);
-        }
-        innerHTML += '</table>'
-        container.innerHTML = innerHTML;
+        
+        alert(JSON.stringify(jsondisp));
+        innerHTML += JSON.stringify(jsondisp) + ",\n<br/>";
+        innerHTML += '</div>';
+        
+        container.innerHTML = innerHTML + JSON.stringify(_.reject(data2, function(el) {
+            return el.t != "metric"
+        }));
     }
 
     var reportsList;
@@ -196,17 +160,8 @@
 
         loadJSON(
             function(data2) {
-                loadJSON(
-                    function(data3) {
-                        launchBuild(data2, data3)
-                    },
-
-                    function(xhr) {
-                        console.error(xhr);
-                    },
-
-                    report2Value
-                );
+                launchBuild(data2);
+                
             },
 
             function(xhr) {
@@ -219,7 +174,7 @@
     </script>
 </head>
 
-<body style="margin:0; padding:15px; color:#EEEEEE; background-color:black; font-family:Monospace; font-size:13px;">
+<body style="margin:0; padding:15px; color:#00FF00; background-color:black; font-family:Monospace; font-size:13px;">
     <div class="dotted">
         <a href="http://localhost/cgi-bin/list_reports.sh">
             << Back to reports list</a>
