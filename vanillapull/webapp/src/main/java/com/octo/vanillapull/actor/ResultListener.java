@@ -1,22 +1,21 @@
 package com.octo.vanillapull.actor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-
-import com.octo.vanillapull.service.AkkaMonteCarlo;
+import com.octo.vanillapull.service.synchronization.AkkaMonteCarlo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ResultListener extends UntypedActor {
 
 	public final static Logger logger = LoggerFactory.getLogger(ResultListener.class);
 	
-	private long nbPerThreads;
+	private int nbPerThreads;
 	public double interestRate;
 	private double bestPremiumsComputed = 0;
 	private int answerReceived = 0;
 	public double maturity = 0;
+    private int numberOfExecutedIteration = 0;
 
 	public ActorRef parent;
 	public ActorRef master;
@@ -28,11 +27,13 @@ public class ResultListener extends UntypedActor {
 			Result resultContainer = (Result) message;
 			Double result = resultContainer.result;
 			bestPremiumsComputed += result;
+            numberOfExecutedIteration += resultContainer.numberOfIterations;
 
 			if (++answerReceived == AkkaMonteCarlo.processors) {
 				// Compute mean
+
 				double meanOfPremiums = bestPremiumsComputed
-						/ (nbPerThreads * AkkaMonteCarlo.processors); // not
+						/ (numberOfExecutedIteration); // not
 																		// using
 				// numberOfIterations because the rounding might might have
 				// truncate some iterations
@@ -43,24 +44,27 @@ public class ResultListener extends UntypedActor {
 
 				if(logger.isDebugEnabled()) logger.debug("[LISTENER] send to future :" + message + " to " + getSender());
 				// Return the answer
-				parent.tell(pricedValue, getSelf());
+				parent.tell(new Result(pricedValue, numberOfExecutedIteration), getSelf());
 
 				// Stopping this actor only use for agregate result
 				getContext().system().stop(getSelf());
 			}
 			return;
-		} else if (message instanceof Work) {
+		} else if (message instanceof AWork) {
 
 			// Store the parent (temp used for Future)
 			parent = getSender();
 			
-			Work work = (Work) message;
+			AWork work = (AWork) message;
 
-			nbPerThreads = work.nbIterations / AkkaMonteCarlo.processors;
+            if (work instanceof SyncWork) {
+                nbPerThreads = ((SyncWork) work).nbIterations / AkkaMonteCarlo.processors;
+                ((SyncWork) work).nbIterations = nbPerThreads;
+            }
 			maturity = work.maturity / 360.0;
 
 			// Modify the message to give the right to the workers
-			work.nbIterations = nbPerThreads;
+
 			work.maturity = maturity;
 
 			master.tell(work, getSelf());

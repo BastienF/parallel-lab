@@ -7,6 +7,7 @@
     vanillapull_dest_path: "{{ distant_home }}/parallel-lab/vanillapull/"
     to_bring_back: "{{ distant_home }}/toBringBack"
     webappWriterPath: "{{ to_bring_back }}/threadCount.json"
+    full_params: "-Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} -Dduration={{ duration }} -Dwarmup=true -DsynchronizationMode={{ synchronizationMode }} -DnoSynchronization_delay={{ noSynchronization_delay }}  -Dserver={{ server }} -Daws={{ aws }} -Dlanguage={{ language }} -XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -DpoolLogPath={{ poolLogPath }}"
   sudo: yes
   user: ${distant_user}
   tasks:
@@ -17,7 +18,8 @@
     - name: prepare log gc
       command: mkdir -p {{ to_bring_back }}/log_gc_{{ launchDate }}
     - name: shutdown tomcat
-      command: bash {{ tomcat_path }}/bin/shutdown.sh
+      shell: ${tomcat_path}/bin/shutdown.sh; pkill -f catalina
+      ignore_errors: yes
       sudo: true
     - name: shutdown jetty
       command: bash {{ jetty_path }}/bin/jetty.sh stop
@@ -38,15 +40,15 @@
       notify: startup httpcore
 
     - name: startup tomcat
-      shell: JAVA_OPTS="-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DnbThreads={{ nbThreads }} -DwriterPath={{ webappWriterPath }}" nohup {{ tomcat_path }}/bin/startup.sh &
+      shell: JAVA_OPTS="{{ full_params }} -DwriterPath={{ webappWriterPath }}" nohup {{ tomcat_path }}/bin/startup.sh &
       sudo: true
 
     - name: startup jetty
-      command: bash {{ jetty_path }}/bin/jetty.sh start "-XX:+PrintGCDetails -XX:+PrintTenuringDistribution -Xloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -Dthreads.min={{ nbThreads }} -Dthreads.max={{ nbThreads }} -DwriterPath={{ webappWriterPath }}"
+      command: bash {{ jetty_path }}/bin/jetty.sh start "{{ full_params }} -Dthreads.min={{ nbThreads }} -Dthreads.max={{ nbThreads }} -DwriterPath={{ webappWriterPath }}"
       sudo: true
 
     - name: startup httpcore
-      shell: cd {{ vanillapull_dest_path }}; mvn -e -pl webapp exec:java -DXX:+PrintGCDetails -DXX:+PrintTenuringDistribution -DXloggc:{{ to_bring_back }}/log_gc_{{ launchDate }}/{{ implementation }}_{{ users }}users_{{ iterations }}_iter.gclog -Dimplementation={{ implementation }} -Diterations={{ iterations }} -Dusers={{ users }} -DwriterPath={{ webappWriterPath }} 1>std.log 2>err.log
+      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp exec:java {{full_params}} -DwriterPath={{ webappWriterPath }}" 1>std.log 2>err.log
       async: 1000000000000000000
       poll: 0
 
@@ -63,13 +65,20 @@
     webappWriterPath: "{{ to_bring_back }}/threadCount.json"
     webappLogGCPath: "{{ to_bring_back }}/log_gc_{{ launchDate }}"
     serverIp: "{{ hostvars['servero7']['privateIp'] }}"
+    full_params: "-Dgatling.simulationClass=PricingSimulation -Dip={{ serverIp }} -Dusers={{ users }} -Dimplementation={{ implementation }} -Diterations={{ iterations }} -DnbThreads={{ nbThreads }} -DsynchronizationMode={{ synchronizationMode }} -DnoSynchronization_delay={{ noSynchronization_delay }}  -Dserver={{ server }} -Daws={{ aws }} -Dlanguage={{ language }}"
   sudo: yes
   user: ${distant_user}
   tasks:
+    - name: warm up shoot
+      shell: cd {{vanillapull_dest_path}}; mvn -pl gatling gatling:execute {{ full_params }} -DlogPath=/dev/null -Dduration=30
+    - name: clean warm up reports
+      command: rm -r {{ results_src_path }}
+    - name: Start server reccording
+      shell: wget {{ serverIp }}:8080/vanillapull-1.0-SNAPSHOT/services/stopper/start/; sleep 1
     - name: launch shoot
-      shell: cd {{vanillapull_dest_path}}; mvn -pl gatling gatling:execute -Dgatling.simulationClass=PricingSimulation -Dip={{ serverIp }} -Dusers={{ users }} -Dimplementation={{ implementation }} -Diterations={{ iterations }} -DlogPath={{ distant_home }}/datalog-{{ launchDate }} -Dduration={{ duration }}
+      shell: cd {{vanillapull_dest_path}}; mvn -pl gatling gatling:execute {{ full_params }} -DlogPath={{ distant_home }}/gatlingResult-{{ launchDate }} -Dduration={{ duration }}
     - name: stop server
-      shell: wget {{ serverIp }}:8080/vanillapull-1.0-SNAPSHOT/services/stopper/stop/
+      shell: wget {{ serverIp }}:8080/vanillapull-1.0-SNAPSHOT/services/stopper/stop/; sleep 1
       ignore_errors: true
     - name: copy secukey
       copy: src=~/.vagrant.d/insecure_private_key dest={{ distant_home }}/provisioning/parallelLab.pem owner=vagrant mode=0700
@@ -81,6 +90,10 @@
     - name: agregate reports 1.1
       command: scp -i {{ distant_home }}/provisioning/parallelLab.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {{ distant_user }}@{{ serverIp }}:{{ webappWriterPath }} {{ webappWriterPath }}
       sudo: true
+    - name: clean gatling if SynchronizationMode
+      shell: cat {{ distant_home }}/gatlingResult-{{ launchDate }}.json >> {{ distant_home }}/datalog-{{ launchDate }}.json
+      sudo: true
+      when: ${synchronizationMode} == true
     - name: agregate reports 1.2
       shell: cat {{ webappWriterPath }} >> {{ distant_home }}/datalog-{{ launchDate }}.json
       sudo: true
@@ -97,7 +110,7 @@
     - name: clean reports 2
       fetch: src={{ distant_home }}/datalog-{{ launchDate }}.json dest={{ results_dest_path }}/datalog-{{ launchDate }}.json flat=yes
     - name: clean reports 2.1
-      fetch: src={{ distant_home }}/datalog-{{ launchDate }}.csv dest={{ results_dest_path }}/datalog-{{ launchDate }}.csv flat=yes
+      fetch: src={{ distant_home }}/gatlingResult-{{ launchDate }}.csv dest={{ results_dest_path }}/datalog-{{ launchDate }}.csv flat=yes
     - name: clean reports 4
       synchronize: mode=pull src={{ results_src_path }} dest={{ results_dest_path_launch }}/{{ implementation }}_{{ users }}users_{{ iterations }}iter_results/
     - name: clean reports 5

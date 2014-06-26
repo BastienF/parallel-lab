@@ -8,13 +8,15 @@
     tomcat_path: "{{ distant_home }}/apache-tomcat-7.0.52/"
     jetty_path: "{{ distant_home }}/jetty-distribution-9.1.3.v20140225/"
     webappWriterPath: "-DwriterPath={{ to_bring_back }}/threadCount.json"
+    full_params: "-Dimplementation=mono -Diterations=500000 -Dusers=1 -Dduration=30 -DnbThreads={{ nbThreads }} -Dserver={{ server }} -Daws={{ aws }} -Dlanguage={{ language }} -DsynchronizationMode=false"
   sudo: yes
   user: ${distant_user}
   tasks:
     - name: clean webapp
-      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp clean package -Dimplementation=mono -Diterations=500000 -Dusers=1 {{ webappWriterPath }}
+      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp clean package {{ full_params }} {{ webappWriterPath }}
     - name: shutdown tomcat
-      command: bash {{ tomcat_path }}/bin/shutdown.sh
+      shell: ${tomcat_path}/bin/shutdown.sh; pkill -f catalina
+      ignore_errors: yes
       sudo: true
     - name: shutdown jetty
       command: bash {{ jetty_path }}/bin/jetty.sh stop
@@ -41,16 +43,16 @@
       sudo: true
       notify: startup tomcat
     - name: startup tomcat
-      shell: JAVA_OPTS="-Dimplementation=mono -Diterations=500000 -Dusers=1 -DnbThreads=4" nohup {{ tomcat_path }}/bin/startup.sh &
+      shell: JAVA_OPTS="{{ full_params }} {{ webappWriterPath }}" nohup {{ tomcat_path }}/bin/startup.sh &
       sudo: true
       notify: undeploy tomcat webapp
     - name: undeploy tomcat webapp
-      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp tomcat7:undeploy  -Dimplementation=mono -Diterations=500000 -Dusers=1 {{ webappWriterPath }}
+      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp tomcat7:undeploy  {{ full_params }} {{ webappWriterPath }}
       notify: deploy tomcat webapp
     - name: deploy tomcat webapp
-      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp tomcat7:deploy  -Dimplementation=mono -Diterations=500000 -Dusers=1 {{ webappWriterPath }}
+      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp tomcat7:deploy  {{ full_params }} {{ webappWriterPath }}
     - name: deploy httpcore webapp
-      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp install -Dimplementation=mono -Diterations=500000 -Dusers=1 {{ webappWriterPath }}
+      shell: cd {{ vanillapull_dest_path }}; mvn -pl webapp install {{ full_params }} {{ webappWriterPath }}
 
     - name: undeploy jetty webapp
       shell: rm {{ jetty_path }}/webapps/{{ war_name }}
@@ -61,5 +63,5 @@
       sudo: true
       notify: startup jetty
     - name: startup jetty
-      command: bash {{ jetty_path }}/bin/jetty.sh start "-Dimplementation=mono -Diterations=500000 -Dusers=1  {{ webappWriterPath }}"
+      command: bash {{ jetty_path }}/bin/jetty.sh start "{{ full_params }} {{ webappWriterPath }}"
       sudo: true

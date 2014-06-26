@@ -4,11 +4,11 @@
     <link rel="stylesheet" href="nv.d3.css" type="text/css" media="screen" />
     <style type="text/css">
     a {
-        color: #00FF00;
+        color: #050505;
     }
     input, button, select, option {
-        background-color: #222222;
-        color: #00FF00;
+        background-color: #FFFFFF;
+        color: #050505;
         -moz-border-radius:5px;
         -webkit-border-radius:5px;
         -o-border-radius:5px;
@@ -16,7 +16,7 @@
     }
     .dotted {
         border-style:dashed;
-        border-color:#00FF00;
+        border-color:#050505;
         border-width:1px;
         padding:5px;
         margin:5px
@@ -27,12 +27,15 @@
     <script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
 
     <script type="text/javascript">
+    var classicImplementations= ["mock", "akka", "mono", "naive", "fork", "executor", "pool"]
+    var colors = ["aqua", "blue", "fuchsia", "gray", "green", "lime", "maroon", "olive", "purple", "red", "silver", "teal", "yellow"]
     var rawdata = ""
     var rawdata2 = ""
 
 
         function formatNumber(x) {
-            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+            if (x !== undefined)
+                return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
         }
 
         function getSearchParameters() {
@@ -66,17 +69,49 @@
 
         var selectIter = document.getElementById("nbIterationsFilter");
         var selectUser = document.getElementById("nbUsersFilter");
+        var selectMetric = document.getElementById("metricFilter");
 
         selectIter.innerHTML = "";
         selectUser.innerHTML = "";
+        selectMetric.innerHTML = "";
+
+/*var specialImplemFirst = JSON.stringify(_.reject(rawdata, function(elt) {
+            return elt.Implementation != "mono";
+        }));
+document.body.innerHTML = specialImplemFirst.split(",").join(",\n");
+return;*/
+
+        var specialImplemFirst = _.chain(_.reject(rawdata, function(elt) {
+            return (elt.t !== undefined || _.contains(classicImplementations, elt.Implementation));
+        })).map(function(elt){ return elt.Implementation}).uniq().value();
+
+
+        var specialImplemSecond = _.chain(_.reject(rawdata2, function(elt) {
+            return (elt.t !== undefined || _.contains(classicImplementations, elt.Implementation));
+        })).map(function(elt){ return elt.Implementation}).uniq().value();
 
         var distinctsItersFirst = _.chain(rawdata).map(function(elt) {
+            if (elt.Iterations === undefined)
+                return elt.Delay
             return elt.Iterations
         }).uniq().value();
         var distinctsUsersFirst = _.chain(rawdata).map(function(elt) {
             return elt.Users
         }).uniq().value();
-
+        var metrics = [];
+        var distinctMetricsFun = function(elt) {
+            if (elt.t == "metric") {
+                for(var key in elt){
+                    if (key != "t" && key != "D" && key != "Implementation" && key != "Iterations" && key != "Users") {
+                        metrics.push(key);
+                    }
+                }
+            }
+        }
+        _.each(rawdata, distinctMetricsFun);
+        
+        var distinctsMetricsFirst = _.uniq(metrics);
+        metrics = []
 
         var distinctsItersSecond = _.chain(rawdata2).map(function(elt) {
             return elt.Iterations
@@ -85,9 +120,13 @@
             return elt.Users
         }).uniq().value();
 
+        _.each(rawdata2, distinctMetricsFun);
+        var distinctsMetricsSecond = _.uniq(metrics);
+
 
         var distinctsIters = _.union(distinctsItersFirst, distinctsItersSecond);
         var distinctsUsers = _.union(distinctsUsersFirst, distinctsUsersSecond);
+        var distinctsMetrics = _.union(distinctsMetricsFirst, distinctsMetricsSecond);
 
         var innerHTML = "";
 
@@ -118,7 +157,7 @@
             document.getElementById(id).innerHTML = innerHTML;
         }
 
-        setDesc(distinctsItersFirst, distinctsUsersFirst, "firstDesc", document.getElementById("reportURL").value);
+        setDesc(distinctsItersFirst, distinctsUsersFirst, "firstDesc", document.getElementById("reportURL" ).value);
         setDesc(distinctsItersSecond, distinctsUsersSecond, "secondDesc", document.getElementById("reportURL2").value);
 
 
@@ -134,22 +173,35 @@
             opt.innerHTML = elt;
             selectUser.appendChild(opt);
         })
+        _.each(distinctsMetrics, function(elt) {
+            var opt = document.createElement('option');
+            opt.value = elt;
+            opt.innerHTML = elt;
+            selectMetric.appendChild(opt);
+        })
 
         function data() {
             var resultImplem = {
+                mock: [],
                 akka: [],
                 mono: [],
                 naive: [],
+                fork: [],
                 executor: [],
                 pool: []
             };
+            for (index = 0; index < specialImplemFirst.length; ++index) {
+                resultImplem[specialImplemFirst[index]] = [];
+            }
 
 
 
-            var result = _.groupBy(_.reject(data2, function(el) {
+            var result = _.groupBy(_.sortBy(_.reject(data2, function(el) {
                 return el.t == "metric" || el.Status == "KO"
+            }), function (el) {
+                return (xAxis == "byIteration" ? parseInt(el.Iterations) : xAxis == "byDelay" ? parseInt(el.Delay) : parseInt(el.Users))  
             }), function(el) {
-                return el.Implementation + '-' + (xAxis == "byIteration" ? el.Iterations : el.Users)
+                return el.Implementation + '-' + (xAxis == "byIteration" ? el.Iterations : xAxis == "byDelay" ? el.Delay : el.Users)
             })
             if (percentile != "none") {
                 _.each(result, function(list) {
@@ -161,20 +213,23 @@
                     list.percentileList.splice(list.percentileList.length - numberToRemove, numberToRemove)
                 })
             }
-
             _.each(result, function(list) {
                 var listToUse = (percentile != "none" ? list.percentileList : list);
                 if (yAxis == "meanTime") {
                     list.total = _.reduce(listToUse, function(acc, item) {
                         return acc + parseInt(item.ResponseTime)
                     }, 0) / listToUse.length
+                } else if (yAxis == "iterNumber") {
+                    list.total = _.reduce(listToUse, function(acc, item) {
+                        return acc + parseInt(item.RealizedIters)
+                    }, 0) / 1000000
                 } else {
                     list.total = listToUse.length
                 }
             })
             _.each(result, function(elt) {
                 resultImplem[elt[0].Implementation].push({
-                    x: parseInt(xAxis == "byIteration" ? elt[0].Iterations : elt[0].Users),
+                    x: parseInt(xAxis == "byIteration" ? elt[0].Iterations : xAxis == "byDelay" ? elt[0].Delay : elt[0].Users),
                     y: elt.total
                 });
             })
@@ -190,11 +245,17 @@
                         color: displayColor,
                     });
             }
+            pushReturned('mock', 'Mock', '#ff0000');
             pushReturned('akka', 'Akka', '#ff7f0e');
             pushReturned('mono', 'Mono', '#f07ffe');
             pushReturned('naive', 'Naive', '#0f7f0e');
+            pushReturned('fork', 'Fork', '#A0A0A0');
             pushReturned('executor', 'Executor', '#007fff');
             pushReturned('pool', 'Pool', '#55ff55');
+
+            for (index = 0; index < specialImplemFirst.length; ++index) {
+                pushReturned(specialImplemFirst[index], specialImplemFirst[index], colors[index]);
+            }
 
             return returned;
         }
@@ -204,18 +265,19 @@
                 .useInteractiveGuideline(true);
 
             chart.xAxis
-                .axisLabel((xAxis == "byIteration" ? 'Iterations' : 'Users'))
+                .axisLabel((xAxis == "byIteration" ? 'Iterations' : xAxis == "byDelay" ? 'Delay' : 'Users'))
                 .tickFormat(d3.format(',r'));
 
             chart.yAxis
-                .axisLabel((yAxis == "meanTime" ? 'Mean time (ms)' : "Request"))
+                .axisLabel((yAxis == "meanTime" ? 'Mean time (ms)' : (yAxis == "iterNumber") ? "Iterations Sum (million)" : "Request"))
                 .tickFormat(d3.format('.02f'));
             chart.margin({
                 left: 80
             })
+            var datum = data();
             var chartElt = first ? '#chart svg' : '#chart2 svg';
             d3.select(chartElt)
-                .datum(data())
+                .datum(datum)
                 .transition().duration(1200)
                 .call(chart);
 
@@ -229,30 +291,45 @@
     function launchThreadCount(form, second) {
         if (!second)
             launchThreadCount(form, true);
-
-        function data() {
+        
             var e = document.getElementById("nbIterationsFilter");
             var iterationsFilter = e.options[e.selectedIndex].value;
             e = document.getElementById("nbUsersFilter");
             var usersFilter = e.options[e.selectedIndex].value;
+            e = document.getElementById("metricFilter");
+            var metricFilter = e.options[e.selectedIndex].value;
+
+        function data() {
 
             var localData = second ? rawdata2 : rawdata;
 
+            var specialImplemFirst = _.chain(_.reject(rawdata, function(elt) {
+            return (elt.t !== undefined || _.contains(classicImplementations, elt.Implementation));
+        })).map(function(elt){ return elt.Implementation}).uniq().value();
+
             var resultImplem = {
+                mock: [],
                 akka: [],
                 mono: [],
                 naive: [],
+                fork: [],
                 executor: [],
                 pool: []
             };
 
+
+            for (index = 0; index < specialImplemFirst.length; ++index) {
+                resultImplem[specialImplemFirst[index]] = [];
+            }
+
             var result = _.reject(localData, function(el) {
-                return el.t != "metric" || el.Iterations != iterationsFilter || el.Users != usersFilter
+                return el.t != "metric" || (el.Iterations != iterationsFilter && el.Delay != iterationsFilter) || el.Users != usersFilter ||  el[metricFilter] === undefined
             })
             _.each(result, function(elt) {
                 resultImplem[elt.Implementation].push({
                     x: parseInt(elt.D),
-                    y: parseInt(elt["jvm.thread.ThreadCount"])
+                    y: parseFloat (elt[metricFilter])
+                    //(metricFilter == "threadCount") ? elt["jvm.thread.ThreadCount"] : (metricFilter == "systemLoadAvg") ? elt["jvm.os.SystemLoadAverage"] : (metricFilter == "processCpuLoad") ? parseFloat(elt["jvm.os.ProcessCpuLoad"]) * 100 : (metricFilter == "heapMemoryUsage") ? parseInt(elt["jvm.memory.HeapMemoryUsage.used"]) / 1000000) : elt["contextswitching"]
                 })
             })
 
@@ -266,11 +343,18 @@
                         color: displayColor,
                     });
             }
+            pushReturned('mock', 'Mock', '#ff0000');
             pushReturned('akka', 'Akka', '#ff7f0e');
             pushReturned('mono', 'Mono', '#f07ffe');
             pushReturned('naive', 'Naive', '#0f7f0e');
+            pushReturned('fork', 'Fork', '#A0A0A0');
             pushReturned('executor', 'Executor', '#007fff');
             pushReturned('pool', 'Pool', '#55ff55');
+
+
+            for (index = 0; index < specialImplemFirst.length; ++index) {
+                pushReturned(specialImplemFirst[index], specialImplemFirst[index], colors[index]);
+            }
 
             return returned;
         }
@@ -284,7 +368,7 @@
                 .tickFormat(d3.format(',r'));
 
             chart.yAxis
-                .axisLabel('Thread Count')
+                .axisLabel(metricFilter)
                 .tickFormat(d3.format('0.2f'));
             chart.margin({
                 left: 80
@@ -371,7 +455,7 @@
     </script>
 </head>
 
-<body style="margin:0; padding:15px; color:#00FF00; background-color:black; font-family:Monospace; font-size:13px;">
+<body style="margin:0; padding:15px; color:#050505; background-color:white; font-family:Monospace; font-size:13px;">
     <div style="height: 88%">
         <div class="dotted">
             <a href="http://localhost/cgi-bin/list_reports.sh"><< Back to reports list</a> --- <a href="http://localhost/parallel-lab/reports_one_shot.html"> Go to reports one shot >> </a>
@@ -384,12 +468,14 @@
                     <label for="xAxis">x :</label>
                     <select name="xAxis" id="xAxis">
                         <option value="byIteration">By iteration</option>
+                        <option value="byDelay">By delay</option>
                         <option value="byUser">By user</option>
                     </select>
                     <label for="yAxis">y :</label>
                     <select name="yAxis" id="yAxis">
                         <option value="meanTime">Mean Time</option>
                         <option value="requestNumber">Request Number</option>
+                        <option value="iterNumber">Iteration Number</option>
                     </select>
                     <label for="percentile">Percentile</label>
                     <select name="percentile" id="percentile">
@@ -442,7 +528,9 @@
                     <label for="nbUsersFilter">Users</label>
                     <select name="nbUsersFilter" id="nbUsersFilter">
                     </select>
-                    <br/>
+                    <label for="metricFilter">Metric</label>
+                    <select name="metricFilter" id="metricFilter">
+                    </select>
                     <input type="button" name="bouton" value="Afficher" onClick="launchThreadCount(chooseThreadProfiling)">
                 </form>
             </div>

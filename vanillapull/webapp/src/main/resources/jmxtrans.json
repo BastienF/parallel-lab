@@ -8,18 +8,6 @@
                 "enabled": "true",
                 "namePrefix": "vanillapull"
             }
-        },
-        {
-                "@class" : "com.octo.vanillapull.monitoring.writers.JMXJsonWriter",
-                "settings" : {
-                  "maxLogFileSize" : "10MB",
-                  "maxLogBackupFiles" : 200,
-                  "debug" : true,
-                  "typeNames" : ["name"]
-                }
         }
-    ],
-      "queryIntervalInSeconds": 2,
-      "numQueryThreads": 1,
-      "exportIntervalInSeconds": 2
+    ]
 }

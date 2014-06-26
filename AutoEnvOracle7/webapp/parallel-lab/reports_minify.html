@@ -1,0 +1,195 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="nv.d3.css" type="text/css" media="screen" />
+    <style type="text/css">
+    a {
+        color: #00FF00;
+    }
+    input, button, select, option {
+        background-color: #222222;
+        color: #00FF00;
+        -moz-border-radius:5px;
+        -webkit-border-radius:5px;
+        -o-border-radius:5px;
+        border-radius:5px;
+    }
+    .dotted {
+        border-style:dashed;
+        border-color:#00FF00;
+        border-width:1px;
+        padding:5px;
+        margin:5px
+    }
+    </style>
+
+    <script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
+    <script type="text/javascript">
+    var rawdata = "";
+    var rawdata2 = "";
+
+    function formatNumber(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+    }
+
+    function buildImplTable(distinctsIters, distinctsUsers, result1, result2, impl, color) {
+        var innerHTML = '<tr style="background-color:' + color + '; color:black"><th>' + impl + '</th>';
+        _.each(distinctsIters, function(elt) {
+            innerHTML += '<th>' + formatNumber(elt) + '</th>';
+        })
+        innerHTML += '</tr>';
+        _.each(distinctsUsers, function(elt) {
+            innerHTML += '<tr style="background-color:' + color + '; color:black"><th>' + elt + '</th>';
+            _.each(distinctsIters, function(eltIter) {
+                var tab1 = result1[impl + '-' + eltIter + '-' + elt];
+                if (tab1 !== undefined) { 
+                var value1 = parseInt(tab1.total);
+            }
+            else {
+                return "";
+            }
+                var tab2 = result2[impl + '-' + eltIter + '-' + elt];
+                if (tab2 !== undefined) {
+                var value2 = parseInt(result2[impl + '-' + eltIter + '-' + elt].total);
+                var diff = (value2 - value1);
+                innerHTML += '<td>' + formatNumber(value1) + '/' + formatNumber(value2) + '<strong><span style="color:' + (diff >= 0 ? '#00CC00' : '#FF0000') + '">(' + parseInt(100 * diff/value1) + '%)</span><strong></td>';
+            } else {
+                alert("R2 : Iter: " + eltIter + "/Users: " + elt + " undefined for " + impl);
+                innerHTML += '<td>' + formatNumber(value1) + '/<strong><span style="color:red;">-' + '(-)</span></strong></td>';
+            }
+
+                
+            })
+            innerHTML += '</tr>';
+        })
+        return innerHTML;
+    }
+
+    function launchBuild(data2) {
+        rawdata = data2;
+        var container = document.getElementById("container");
+        var report1 = document.getElementById("report1");
+        var report2 = document.getElementById("report2");
+        var report1Value = report1.options[report1.selectedIndex].innerHTML;
+        var report2Value = report2.options[report2.selectedIndex].innerHTML;
+        var innerHTML = '<div class="dotted">';
+
+        var result1 = _.groupBy(_.reject(data2, function(el) {
+            return el.t == "metric"
+        }), function(el) {
+            return el.Implementation + '-' + el.Iterations + '-' + el.Users
+        })
+
+        var jsondisp = [];
+
+        _.each(result1, function(list) {
+            var item = {};
+            item.Implementation = list[0].Implementation;
+            item.Iterations = list[0].Iterations;
+            item.ResponseTime = _.reduce(list, function(acc, item) {
+                return acc + parseInt(item.ResponseTime)
+            }, 0) / list.length
+            item.Duration = list[0].Duration;
+            item.Users = list[0].Users;
+            item.Serv = list[0].Serv;
+            item.AWS = list[0].AWS;
+            item.Lang = list[0].Lang;
+            item.NbT = list[0].NbT;
+            jsondisp.push(item);
+        })
+        
+        alert(JSON.stringify(jsondisp));
+        innerHTML += JSON.stringify(jsondisp) + ",\n<br/>";
+        innerHTML += '</div>';
+        
+        container.innerHTML = innerHTML + JSON.stringify(_.reject(data2, function(el) {
+            return el.t != "metric"
+        }));
+    }
+
+    var reportsList;
+
+    function listAllReports() {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    reportsList = xhr.responseText;
+                    document.getElementById("report1").innerHTML = reportsList;
+                    document.getElementById("report2").innerHTML = reportsList;
+                } else {
+                    console.error(xhr);
+                }
+            }
+        };
+        xhr.open("GET", "http://localhost/cgi-bin/list_reports_html_options.sh", true);
+        xhr.send();
+    }
+
+    listAllReports();
+
+    function launch() {
+        var report1 = document.getElementById("report1");
+        var report1Value = report1.options[report1.selectedIndex].value;
+
+
+        var report2 = document.getElementById("report2");
+        var report2Value = report2.options[report2.selectedIndex].value;
+
+
+        function loadJSON(success, error, file) {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        if (success) {
+                            var jsonFile = xhr.responseText;
+                            if (jsonFile[0] != "[")
+                                jsonFile = ("[" + jsonFile.substring(0, jsonFile.length - 2) + "]");
+                            success(JSON.parse(jsonFile));
+                        }
+                    } else {
+                        if (error)
+                            error(xhr);
+                    }
+                }
+            };
+            xhr.open("GET", file, true);
+            xhr.send();
+        }
+
+        loadJSON(
+            function(data2) {
+                launchBuild(data2);
+                
+            },
+
+            function(xhr) {
+                console.error(xhr);
+            },
+
+            report1Value
+        );
+    }
+    </script>
+</head>
+
+<body style="margin:0; padding:15px; color:#00FF00; background-color:black; font-family:Monospace; font-size:13px;">
+    <div class="dotted">
+        <a href="http://localhost/cgi-bin/list_reports.sh">
+            << Back to reports list</a>
+    </div>
+    <div id="father">
+        <div class="dotted">
+            <select id="report1">
+            </select>
+            <select id="report2">
+            </select>
+            <input type="button" name="bouton" value="Afficher" onClick="launch()">
+        </div>
+        <div class="dotted" id="container">
+        </div>
+    </div>
+</body>
+
+</html>

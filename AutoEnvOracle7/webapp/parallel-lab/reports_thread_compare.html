@@ -4,11 +4,11 @@
     <link rel="stylesheet" href="nv.d3.css" type="text/css" media="screen" />
     <style type="text/css">
     a {
-        color: #00FF00;
+        color: #EEEEEE;
     }
     input, button, select, option {
         background-color: #222222;
-        color: #00FF00;
+        color: #EEEEEE;
         -moz-border-radius:5px;
         -webkit-border-radius:5px;
         -o-border-radius:5px;
@@ -16,7 +16,7 @@
     }
     .dotted {
         border-style:dashed;
-        border-color:#00FF00;
+        border-color:#EEEEEE;
         border-width:1px;
         padding:5px;
         margin:5px
@@ -41,12 +41,18 @@
         _.each(distinctsUsers, function(elt) {
             innerHTML += '<tr style="background-color:' + color + '; color:black"><th>' + elt + '</th>';
             _.each(distinctsIters, function(eltIter) {
-                var value1 = parseInt(result1[impl + '-' + eltIter + '-' + elt].total);
+                var tab1 = result1[impl + '-' + eltIter + '-' + elt];
+                if (tab1 !== undefined) { 
+                var value1 = parseInt(tab1.total);
+            }
+            else {
+                return "";
+            }
                 var tab2 = result2[impl + '-' + eltIter + '-' + elt];
                 if (tab2 !== undefined) {
                 var value2 = parseInt(result2[impl + '-' + eltIter + '-' + elt].total);
                 var diff = (value2 - value1);
-                innerHTML += '<td>' + formatNumber(value1) + '/' + formatNumber(value2) + '<strong><span style="color:' + (diff >= 0 ? '#00CC00' : '#FF0000') + '">(' + parseInt(100 * diff/value1) + '%)</span><strong></td>';
+                innerHTML += '<td>' + formatNumber(value1) + '/' + formatNumber(value2) + '<strong><span style="color:' + (diff >= 0 ? '#00CC00' : '#FF0000') + '; background-color:black; float:right">(' + parseInt(100 * diff/value1) + '%)</span><strong></td>';
             } else {
                 alert("R2 : Iter: " + eltIter + "/Users: " + elt + " undefined for " + impl);
                 innerHTML += '<td>' + formatNumber(value1) + '/<strong><span style="color:red;">-' + '(-)</span></strong></td>';
@@ -213,7 +219,7 @@
     </script>
 </head>
 
-<body style="margin:0; padding:15px; color:#00FF00; background-color:black; font-family:Monospace; font-size:13px;">
+<body style="margin:0; padding:15px; color:#EEEEEE; background-color:black; font-family:Monospace; font-size:13px;">
     <div class="dotted">
         <a href="http://localhost/cgi-bin/list_reports.sh">
             << Back to reports list</a>

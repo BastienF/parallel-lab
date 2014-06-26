@@ -4,6 +4,7 @@ import com.octo.vanillapull.httpcoreserver.nio.dao.InstrumentDAO;
 import com.octo.vanillapull.httpcoreserver.nio.requesthandler.PricerHandler;
 import com.octo.vanillapull.httpcoreserver.nio.requesthandler.StopHandler;
 import com.octo.vanillapull.service.*;
+import com.octo.vanillapull.service.synchronization.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +42,9 @@ public class Server {
                 break;
             case "pool" :
                 result = new PoolMultiThreadedMonteCarlo();
+                break;
+            case "fork" :
+                result = new ForkMultiThreadedMonteCarlo();
                 break;
             case "executor" :
                 result = new ExecutorMultiThreadedMonteCarlo();

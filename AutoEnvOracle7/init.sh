@@ -4,7 +4,7 @@ date=`date +%s`
 while [ $# -gt 0 ]
 do
     case "$1" in
-  --use-aws) aws=true; shift;;
+  --use-aws) aws=true;;
   -*) echo >&2 \
       "wrong var: usage: $0 [--use-aws]"
       exit 1;;
@@ -35,12 +35,14 @@ else
 	full=true
 fi
 
-ansible-playbook -i tmp/hosts_aws provisioning.yml --private-key=provisioning/parallelLab.pem --extra-vars 'distant_user='$distant_user' aws='$aws' full='$full
-
 ansible-playbook -i $HOSTS -l gatling provisioning.yml --private-key=$PKEY --extra-vars 'distant_user='$distant_user' aws='$aws' full='$full 1>tmp/provisioning-gatling.log &
 WAITPID=$!
 echo "pid: $WAITPID"
 ansible-playbook -i $HOSTS -l server provisioning.yml --private-key=$PKEY --extra-vars 'distant_user='$distant_user' aws='$aws' full='$full
 wait $WAITPID
+
+if [ "$aws" = true ] ; then
+	aws ec2 reboot-instances --instance-ids `cat tmp/aws_instances_id`
+fi
 
 echo "executed in" $(((`date +%s` - $date)/60)) "minutes"

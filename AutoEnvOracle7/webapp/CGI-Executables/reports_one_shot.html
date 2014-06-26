@@ -1,0 +1,143 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="nv.d3.css" type="text/css" media="screen" />
+    <style type="text/css">
+    a {
+        color: #EEEEEE;
+    }
+    input, button, select, option {
+        background-color: #222222;
+        color: #EEEEEE;
+        -moz-border-radius:5px;
+        -webkit-border-radius:5px;
+        -o-border-radius:5px;
+        border-radius:5px;
+    }
+    .dotted {
+        border-style:dashed;
+        border-color:#EEEEEE;
+        border-width:1px;
+        padding:5px;
+        margin:5px
+    }
+    </style>
+
+    <script type="text/javascript">
+    var rawdata = "";
+
+    function launchGraphBuild(data2, first) {
+        rawdata = data2;
+
+        function data() {
+            var resultImplem = {
+                akka: [],
+                mono: [],
+                naive: [],
+                executor: [],
+                pool: []
+            };
+
+            var result = _.groupBy(_.reject(data2, function(el) {
+                return el.t == "metric" || el.Status == "KO"
+            }), function(el) {
+                return el.Implementation
+            })
+
+            _.each(result, function(list) {
+                list.total = _.reduce(list, function(acc, item) {
+                    return acc + parseInt(item.ResponseTime)
+                }, 0) / list.length
+            })
+            elt.total;
+
+        }
+    }
+
+    var reportsList;
+
+    function listAllReports() {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    if (success) {
+                        reportsList = xhr.responseText;
+                    }
+                } else {
+                    if (error)
+                        error(xhr);
+                }
+            }
+        };
+        xhr.open("GET", "http://localhost/cgi-bin/list_reports_html_options.sh", true);
+        xhr.send();
+    }
+
+    listAllReports();
+
+    function launch(form2) {
+        function loadJSON(success, error, file) {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        if (success) {
+                            var jsonFile = xhr.responseText;
+                            if (jsonFile[0] != "[")
+                                jsonFile = ("[" + jsonFile.substring(0, jsonFile.length - 2) + "]");
+                            success(JSON.parse(jsonFile));
+                        }
+                    } else {
+                        if (error)
+                            error(xhr);
+                    }
+                }
+            };
+            xhr.open("GET", file, true);
+            xhr.send();
+        }
+
+        loadJSON(
+            function(data2) {
+                launchGraphBuild(data2, true)
+            },
+
+            function(xhr) {
+                console.error(xhr);
+            },
+
+            form2.reportURL.value
+        );
+        if (form2.reportURL2.value != "") {
+            loadJSON(
+                function(data2) {
+                    launchGraphBuild(data2, false)
+                },
+
+                function(xhr) {
+                    console.error(xhr);
+                },
+
+                form2.reportURL2.value
+            );
+
+        }
+    }
+    </script>
+</head>
+
+<body style="margin:0; padding:15px; color:#EEEEEE; background-color:black; font-family:Monospace; font-size:13px;">
+    <div id="father">
+        <div class="dotted" id="container">
+            <select id="mySelect">
+            </select>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+    document.getElementById("mySelect").innerHTML = reportsList;
+    </script>
+</body>
+
+</html>
