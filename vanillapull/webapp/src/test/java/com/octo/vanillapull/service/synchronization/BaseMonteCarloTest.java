@@ -1,5 +1,6 @@
 package com.octo.vanillapull.service.synchronization;
 
+import com.octo.vanillapull.monitoring.meters.ChronicleLogger;
 import com.octo.vanillapull.monitoring.writers.FJPoolBehaviorLogWriter;
 import com.octo.vanillapull.service.BaseThreadedMonteCarlo;
 import org.junit.Test;
@@ -18,6 +19,8 @@ public abstract class BaseMonteCarloTest {
         BaseThreadedMonteCarlo c = getImplementation();
         c.numberOfIterations = 1_000_000;
         c.logWriter = new FJPoolBehaviorLogWriter();
+        final ChronicleLogger chronicleLogger = new ChronicleLogger();
+        c.chronicleLogger = chronicleLogger;
         c.interestRate = 0.015;
         c.init();
 
