@@ -42,7 +42,7 @@ public class ForkMultiThreadedMonteCarlo extends BaseThreadedMonteCarlo {
         @Override
         protected Double compute() {
             if (logWriter.isLogActived())
-                chronicleLogger.logEntry(this, getBehaviorLogEntry("Start", name, color));
+                chronicleLogger.logEntry(this, getBehaviorLogEntry("Start", name + "-Pre", "red"));
             int nbPerThreads = getNbThreads();
             MonteCarloTask[] tasks = new MonteCarloTask[processors];
             double bestPremiumsComputed = 0;
@@ -51,8 +51,17 @@ public class ForkMultiThreadedMonteCarlo extends BaseThreadedMonteCarlo {
                         spot, strike, volatility, "Task-" + requestId + "-" + i, color);
                 if (i < processors - 1)
                     task.fork();
-                else
+                else {
+                    if (logWriter.isLogActived()) {
+                        chronicleLogger.logEntry(this, getBehaviorLogEntry("Stop", name + "-Pre", "red"));
+                        chronicleLogger.logEntry(this, getBehaviorLogEntry("Start", name, color));
+                    }
                     bestPremiumsComputed += task.compute();
+                    if (logWriter.isLogActived()) {
+                        chronicleLogger.logEntry(this, getBehaviorLogEntry("Stop", name, color));
+                        chronicleLogger.logEntry(this, getBehaviorLogEntry("Start", name + "-Post", "red"));
+                    }
+                }
                 tasks[i] = task;
             }
             for (int i = 0; i < processors; i++) {
@@ -74,7 +83,7 @@ public class ForkMultiThreadedMonteCarlo extends BaseThreadedMonteCarlo {
             double pricedValue = Math.exp(-interestRate * maturity) * meanOfPremiums;
 
             if (logWriter.isLogActived()) {
-                chronicleLogger.logEntry(this, getBehaviorLogEntry("Stop", name, color));
+                chronicleLogger.logEntry(this, getBehaviorLogEntry("Stop", name + "-Post", "red"));
                 logWriter.log(chronicleLogger.getAllEntriesAndClose(this));
             }
             return pricedValue;
