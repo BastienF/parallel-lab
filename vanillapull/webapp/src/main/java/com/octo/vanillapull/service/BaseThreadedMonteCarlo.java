@@ -2,6 +2,8 @@ package com.octo.vanillapull.service;
 
 import com.octo.vanillapull.monitoring.meters.ChronicleLogger;
 import com.octo.vanillapull.monitoring.writers.FJPoolBehaviorLogWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -11,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Henri on 12/06/2014.
  */
 public abstract class BaseThreadedMonteCarlo implements PricingService {
+    public final static Logger logger = LoggerFactory.getLogger(BaseThreadedMonteCarlo.class);
 
     public static final int processors = Runtime.getRuntime().availableProcessors();
     protected final static String[] colors = {"aqua", "blue", "fuchsia", "gray", "green", "lime", "maroon", "olive", "purple", "red", "silver", "teal", "yellow"};
@@ -44,7 +47,7 @@ public abstract class BaseThreadedMonteCarlo implements PricingService {
     protected int getNbThreads() {
         int result = numberOfIterations / processors;
         if(result * processors != numberOfIterations) {
-            throw new IllegalArgumentException(numberOfIterations + " can't be divided by " + processors);
+            logger.error(numberOfIterations + " can't be divided by " + processors);
         }
         return result;
     }

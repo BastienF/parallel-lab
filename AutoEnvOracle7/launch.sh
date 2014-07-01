@@ -9,11 +9,12 @@ do
     case "$1" in
   --scenario) scenario="$2"; shift;;
   --server) server="$2"; shift;;
-  --nbThreads) nbThreads="$2"; shift;;
+  --nbThreads) nbThreads="$2"; minNbThreads="$2" shift;;
   --use-aws) aws=true;;
   --poolLogPath) poolLogPath="$2"; shift;;
+  --consolidateReport) consolidateReport=true; shift;;
   -*) echo >&2 \
-      "wrong var: usage: $0 --scenario scenario [--server server] [--nbThreads nbThreads] [--use-aws] [--poolLogPath poolLogPath]"
+      "wrong var: usage: $0 --scenario scenario [--server server] [--nbThreads nbThreads] [--use-aws] [--poolLogPath poolLogPath] [--consolidateReport]"
       exit 1;;
   *)  break;; # terminate while loop
     esac
@@ -22,12 +23,15 @@ done
 
 if [ -z "$scenario" ]; then
   echo >&2 \
-      "not enougth vars: usage: $0 --scenario scenario [--server server] [--nbThreads nbThreads] [--use-aws] [--poolLogPath poolLogPath]"
+      "not enougth vars: usage: $0 --scenario scenario [--server server] [--nbThreads nbThreads] [--use-aws] [--poolLogPath poolLogPath] [--consolidateReport]"
   exit 1
 fi
 
 if [ -z "$aws" ]; then
   aws=false
+fi
+if [ -z "$consolidateReport" ]; then
+  consolidateReport=false
 fi
 
 JAVA_VERSION=7
@@ -50,6 +54,7 @@ fi
 
 if [ -z "$nbThreads" ]; then
   nbThreads=200
+  minNbThreads=4
 fi
 
 if [ -z "$server" ]; then 
@@ -61,7 +66,7 @@ if [ "$aws" = true ] ; then
     launchDate="AWS-$launchDate"
 fi
 
-static_param='launchDate='$launchDate' server='$server' scenario='$scenario' distant_user='$distant_user' aws='$aws' language='$LANGUAGE' nbThreads='$nbThreads' poolLogPath='$poolLogPath
+static_param='launchDate='$launchDate' server='$server' scenario='$scenario' distant_user='$distant_user' aws='$aws' consolidateReport='$consolidateReport' language='$LANGUAGE' nbThreads='$nbThreads' minNbThreads='$minNbThreads' poolLogPath='$poolLogPath
 
 echo "Server setted at" $server
 ansible-playbook -i $HOSTS -l $VM_SERVER deploy_webapp.yml --private-key=$PKEY --extra-vars "$static_param"
@@ -92,7 +97,7 @@ launch () {
 launch_all() {
         launch akka $1 $2 $3;
         launch naive $1 $2 $3;
-       	launch mono $1 $2 $3;
+        launch mono $1 $2 $3;
         launch fork $1 $2 $3;
        	launch executor $1 $2 $3;
        	launch pool $1 $2 $3;

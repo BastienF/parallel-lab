@@ -8,7 +8,7 @@
     tomcat_path: "{{ distant_home }}/apache-tomcat-7.0.52/"
     jetty_path: "{{ distant_home }}/jetty-distribution-9.1.3.v20140225/"
     webappWriterPath: "-DwriterPath={{ to_bring_back }}/threadCount.json"
-    full_params: "-Dimplementation=mono -Diterations=500000 -Dusers=1 -Dduration=30 -DnbThreads={{ nbThreads }} -Dserver={{ server }} -Daws={{ aws }} -Dlanguage={{ language }} -DsynchronizationMode=false"
+    full_params: "-Dimplementation=mono -Diterations=500000 -Dusers=1 -Dduration=30 -DnbThreads={{ nbThreads }} -DminNbThreads={{ minNbThreads }} -Dserver={{ server }} -Daws={{ aws }} -Dlanguage={{ language }} -DsynchronizationMode=false"
   sudo: yes
   user: ${distant_user}
   tasks:

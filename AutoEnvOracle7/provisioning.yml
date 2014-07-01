@@ -10,7 +10,7 @@
   user: ${distant_user}
   tasks:
     - name: Clean local project
-      local_action: shell cd ../vanillapull/; mvn clean cd gatling-json/gatling; mvn clean; cd ../gatling-highcharts; mvn clean; 
+      local_action: shell cd ../vanillapull/; mvn clean; cd gatling-json/gatling; mvn clean; cd ../gatling-highcharts; mvn clean; 
       sudo: false
       when: ${aws}
     - name: archive local project
@@ -84,6 +84,8 @@
       when: ${tomcat_state.stdout} == "not_installed"
     - name: configure tomcat
       command: cp {{ provisioning_path }}/tomcat-users.xml {{ distant_home }}/apache-tomcat-7.0.52/conf/
+    - name: configure tomcat 2
+      command: cp {{ provisioning_path }}/server.xml {{ distant_home }}/apache-tomcat-7.0.52/conf/
     - name: testif jetty is already installed
       action: shell test -d {{ distant_home }}/jetty-distribution-9.1.3.v20140225/ && echo "\"installed\"" || echo "\"not_installed\""
       register: jetty_state
@@ -109,7 +111,7 @@
   user: ${distant_user}
   tasks:
     - name: Clean local project
-      local_action: shell cd ../vanillapull/; mvn clean cd gatling-json/gatling; mvn clean; cd ../gatling-highcharts; mvn clean; 
+      local_action: shell cd ../vanillapull/; mvn clean; cd gatling-json/gatling; mvn clean; cd ../gatling-highcharts; mvn clean; 
       sudo: false
     - name: archive local project
       local_action: command tar -vzcf tmp/vanillapull.tar.gz ../vanillapull
@@ -123,6 +125,9 @@
       command: mkdir -p {{ distant_home }}/toBringBack/
     - name: creating required path 3
       command: mkdir -p {{ distant_home }}/provisioning/
+    - name: handleRights
+      command: chmod 777 {{ distant_home }}/provisioning/
+      sudo: true
     - name: transfer and untar projects
       unarchive: src=tmp/vanillapull.tar.gz dest={{ distant_home }}/parallel-lab/
     - name: transfer and untar provisioning

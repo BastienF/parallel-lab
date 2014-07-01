@@ -76,7 +76,11 @@ class JsonDataWriter extends DataWriter with Logging {
   private val aws = System.getProperty("aws")
   private val language = System.getProperty("language")
   private val nbThreads = System.getProperty("nbThreads")
+  private val consolidateReport = System.getProperty("consolidateReport")
   var constantLog: String = ""
+
+  private var responseTimeSum:Long = 0;
+  private var numberOfResponses = 0;
 
   private def getConstantLog(): String = {
     val synchronizationMode: String = System.getProperty("synchronizationMode")
@@ -96,6 +100,13 @@ class JsonDataWriter extends DataWriter with Logging {
   }
 
   private def flush {
+    if (consolidateReport != null && consolidateReport != "false") {
+      write(new StringBuilder().append(constantLog)
+        .append("\"ResponseTime\": \"").append((responseTimeSum / numberOfResponses).toString).append("\",\n")
+        .append("\"NumberOfRequest\": \"").append((numberOfResponses).toString).append("\"\n")
+        .append("},\n")
+        .toString.getBytes(configuration.core.encoding))
+    }
     os.write(buffer, 0, bufferPosition)
     bufferPosition = 0
   }
@@ -131,8 +142,17 @@ class JsonDataWriter extends DataWriter with Logging {
   }
 
   override def onRequestRecord(requestRecord: RequestRecord) {
-    if (requestRecord.requestStatus.toString == "OK")
-      write(serialize(requestRecord, constantLog))
+    if (requestRecord.requestStatus.toString == "OK") {
+      if (consolidateReport == null || consolidateReport == "false") {
+        write(serialize(requestRecord, constantLog))
+      }
+      else
+      {
+        responseTimeSum += requestRecord.responseReceivingStartDate - requestRecord.requestSendingEndDate;
+        numberOfResponses += 1;
+      }
+    }
+
   }
 
   override def onFlushDataWriter {
