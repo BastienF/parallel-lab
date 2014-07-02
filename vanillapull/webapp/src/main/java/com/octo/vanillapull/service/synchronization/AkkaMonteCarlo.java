@@ -7,10 +7,8 @@ import com.octo.vanillapull.actor.Result;
 import com.octo.vanillapull.actor.ResultListener;
 import com.octo.vanillapull.actor.SyncWork;
 import com.octo.vanillapull.service.BaseThreadedMonteCarlo;
-import com.octo.vanillapull.service.PricingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import scala.concurrent.Await;
@@ -31,7 +29,6 @@ public class AkkaMonteCarlo extends BaseThreadedMonteCarlo {
 	
 	public final static Logger logger = LoggerFactory.getLogger(AkkaMonteCarlo.class);
 
-	int nb = 0;
 	ActorSystem system;
 	ActorRef master;
 

@@ -34,7 +34,7 @@ else
 	vagrant up
 	full=true
 fi
-
+ansible -i $HOSTS -a "ls"
 ansible-playbook -i $HOSTS -l gatling provisioning.yml --private-key=$PKEY --extra-vars 'distant_user='$distant_user' aws='$aws' full='$full 1>tmp/provisioning-gatling.log &
 WAITPID=$!
 echo "pid: $WAITPID"

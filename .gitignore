@@ -12,21 +12,21 @@ org.eclipse.wst.common.component
 org.eclipse.wst.common.project.facet.core.xml
 **/.settings
 *.DS_Store
-AutoEnvOracle7/results
-AutoEnvOracle7/share
+vanillapull/shooting-bench/results
+vanillapull/shooting-bench/share
 *~
 .vagrant
 vagrant.log
 *.log
 Fast1
-AutoEnvOracle7/launch_multi_scenarios.sh
+vanillapull/shooting-bench/launch_multi_scenarios.sh
 scenarios
 
-AutoEnvOracle7/tmp/
+vanillapull/shooting-bench/tmp/
 
 *.pem
 
-AutoEnvOracle7/test.yml
+vanillapull/shooting-bench/test.yml
 launcherApp
 provisioning/yjp*
-AutoEnvOracle7/provisioning/yjp-2013-build-13080/
+vanillapull/shooting-bench/provisioning/yjp-2013-build-13080/

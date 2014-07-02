@@ -10,11 +10,11 @@
   user: ${distant_user}
   tasks:
     - name: Clean local project
-      local_action: shell cd ../vanillapull/; mvn clean; cd gatling-json/gatling; mvn clean; cd ../gatling-highcharts; mvn clean; 
+      local_action: shell cd ../; mvn clean; cd gatling-json/gatling; mvn clean; cd ../gatling-highcharts; mvn clean; 
       sudo: false
       when: ${aws}
     - name: archive local project
-      local_action: command tar -vzcf tmp/vanillapull.tar.gz ../vanillapull
+      local_action: command tar -vzcf tmp/vanillapull.tar.gz ../
       sudo: false
       when: ${aws}
     - name: archive provisioning
@@ -70,7 +70,7 @@
       command: git clone https://github.com/gdbtek/setup-graphite.git
       when: ${full} and ${graphite_state.stdout} == "not_installed"
     - name: configure graphite
-      command: bash {{ distant_home }}/setup-graphite/{{ distant_user }}.bash --login 'root' --password 'root' --email 'bfi@octo.com'
+      command: bash {{ distant_home }}/setup-graphite/ubuntu.bash --login 'root' --password 'root' --email 'bfi@octo.com'
       when: ${full} and ${graphite_state.stdout} == "not_installed"
       sudo: true
     - name: testif tomcat is already installed
@@ -103,7 +103,7 @@
       when: ${jetty_state.stdout} == "not_installed"
 - hosts: gatling
   vars:
-    vanillapull_src_path: "../vanillapull/"
+    vanillapull_src_path: "../"
     vanillapull_dest_path: "{{ distant_home }}/parallel-lab/vanillapull/"
     distant_home: "/home/{{ distant_user }}"
     provisioning_path: "{{ distant_home }}/provisioning"
@@ -111,10 +111,10 @@
   user: ${distant_user}
   tasks:
     - name: Clean local project
-      local_action: shell cd ../vanillapull/; mvn clean; cd gatling-json/gatling; mvn clean; cd ../gatling-highcharts; mvn clean; 
+      local_action: shell cd ../; mvn clean; cd gatling-json/gatling; mvn clean; cd ../gatling-highcharts; mvn clean; 
       sudo: false
     - name: archive local project
-      local_action: command tar -vzcf tmp/vanillapull.tar.gz ../vanillapull
+      local_action: command tar -vzcf tmp/vanillapull.tar.gz ../
       sudo: false
     - name: archive provisioning
       local_action: command tar -vzcf tmp/provisioning.tar.gz ./provisioning

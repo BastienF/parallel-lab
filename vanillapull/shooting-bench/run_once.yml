@@ -55,7 +55,7 @@
 - hosts: gatling
   vars:
     distant_home: "/home/{{ distant_user }}"
-    vanillapull_src_path: "../vanillapull/"
+    vanillapull_src_path: "../"
     vanillapull_dest_path: "{{ distant_home }}/parallel-lab/vanillapull/"
     to_bring_back: "{{ distant_home }}/toBringBack"
     results_dest_path: "./scenarios/{{ scenario }}/"

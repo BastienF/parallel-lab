@@ -10,10 +10,10 @@
   user: ubuntu
   tasks:
     - name: Clean local project
-      local_action: shell cd ../vanillapull/; mvn clean cd gatling-json/gatling; mvn clean; cd ../gatling-highcharts; mvn clean; 
+      local_action: shell cd ../; mvn clean cd gatling-json/gatling; mvn clean; cd ../gatling-highcharts; mvn clean; 
       sudo: false
     - name: archive local project
-      local_action: command tar -vzcf tmp/vanillapull.tar.gz ../vanillapull
+      local_action: command tar -vzcf tmp/vanillapull.tar.gz ../
       sudo: false
     - name: creating required path
       command: mkdir -p "{{ distant_home }}/parallel-lab/vanillapull/"
